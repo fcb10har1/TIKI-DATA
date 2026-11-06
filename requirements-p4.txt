@@ -1,0 +1,6 @@
+# Tested P4 environment: CPython 3.12. Original starter requirements are unchanged.
+numpy==2.2.6
+pandas==2.2.3
+python-dateutil==4.0.0
+pytz==2026.6
+tzdata==2026.6

@@ -1,0 +1,122 @@
+{
+  "task_id": "p4-integration-evaluation",
+  "title": "Implement P4 with bounded verification and review loops",
+  "status": "partial_external_acceptance_blocked",
+  "source_of_truth": {
+    "prd_path": "docs/PRD.md",
+    "prd_reviewed": true,
+    "project_context_path": "docs/PROJECT_CONTEXT.md",
+    "project_context_reviewed": true,
+    "prd_update_task_id": "docs-closure",
+    "contradictions": ["P1-P3 production artifacts, restricted match assets and external splits are absent; user confirmed they are unavailable."]
+  },
+  "knowledge_graph": {
+    "skill": "repo-memory-graph",
+    "preflight_required": true,
+    "context_read_required": true,
+    "event_logging_required": true,
+    "closure_update_required": true,
+    "validation_required": true,
+    "effective_status": "deferred_by_user_policy",
+    "policy_override": "The user's explicit-save-only memory rule takes precedence. No persistent memory graph was initialized or written. Implementation relationships and evidence are documented as requested project artifacts."
+  },
+  "evidence_policy": {
+    "truthful_results_required": true,
+    "no_test_removal_to_pass": true,
+    "comprehensive_validation_required": true,
+    "failed_checks_must_be_reported": true
+  },
+  "execution": {
+    "owner": "primary agent",
+    "delegation": "none; user requested refinement loops, not delegated agents",
+    "review": "tests plus sequential requirements, architecture, implementation, privacy, QA, documentation and adversarial self-review; no independent human approval claimed"
+  },
+  "roles": [
+    {"role": "Task Intake Analyst", "file": "00_Core_Orchestration/Task_Intake_Analyst.md", "why": "Separate P4 infrastructure acceptance from unavailable team/data acceptance"},
+    {"role": "Agentic Workflow Orchestrator", "file": "00_Core_Orchestration/Agentic_Workflow_Orchestrator.md", "why": "Bound review loops and preserve truthful evidence"},
+    {"role": "Planning and Decomposition Agent", "file": "00_Core_Orchestration/Planning_and_Decomposition_Agent.md", "why": "Freeze transport and adapter boundaries before connecting stages"},
+    {"role": "Integration and Handoff Coordinator", "file": "00_Core_Orchestration/Integration_and_Handoff_Coordinator.md", "why": "Implement runner, scoring, reproduction and P1-P3 handoffs"},
+    {"role": "Independent Reviewer and Critic", "file": "00_Core_Orchestration/Independent_Reviewer_and_Critic.md", "why": "Use the review criteria for leakage, false success, nondeterminism and compatibility; actual review is self-review"},
+    {"role": "Release Gatekeeper", "file": "00_Core_Orchestration/Release_Gatekeeper.md", "why": "Distinguish local tooling readiness from blocked real V1 acceptance"}
+  ],
+  "tasks": [
+    {
+      "id": "contracts-runner", "title": "Define handoffs and implement the inference/reproduction runner",
+      "role": "Integration and Handoff Coordinator",
+      "write_scope": ["tiki_data/contracts.py", "tiki_data/artifacts.py", "tiki_data/pipeline.py", "tiki_data/provenance.py", "configs/", "requirements-p4.txt"],
+      "depends_on": [],
+      "acceptance_criteria": ["Validated full-frame artifacts and declared adapters", "Official CSV validation", "Hashes and timing", "Actual rerun with identical CSV bytes"],
+      "validation": ["Contract/negative-path regression tests", "Full-size synthetic baseline and clean-setup reproduction"],
+      "prd_impact": "update-required", "knowledge_graph_events": ["observation", "decision", "implementation", "verification"]
+    },
+    {
+      "id": "evaluation", "title": "Implement external comparisons, shared log and frozen holdout access",
+      "role": "Integration and Handoff Coordinator",
+      "write_scope": ["tiki_data/benchmark.py", "tiki_data/holdout.py", "tiki_data/experiments.py", "tiki_data/demo.py", "tiki_data/__main__.py", "tests/"],
+      "depends_on": ["contracts-runner"],
+      "acceptance_criteria": ["Same match set for rules/TCN/TCN+Viterbi", "Official metric parity", "No test-label access during validation/freeze", "Failed test attempts retained", "Synthetic/public evidence cannot select a real algorithm"],
+      "validation": ["Official baseline score regression", "Leakage, period/FPS, holdout and tamper tests", "CLI synthetic end-to-end workflow"],
+      "prd_impact": "update-required", "knowledge_graph_events": ["implementation", "finding", "verification"]
+    },
+    {
+      "id": "docs-closure", "title": "Reconcile PRD, runbook, interfaces, technical report and task board",
+      "role": "Integration and Handoff Coordinator",
+      "write_scope": ["docs/", "README.md", ".gitignore"],
+      "depends_on": ["contracts-runner", "evaluation"],
+      "acceptance_criteria": ["Commands are tested", "Ownership and unavailable evidence are explicit", "No restricted/generated artifacts are published"],
+      "validation": ["Documentation and final-diff review", "Workflow JSON validation", "Git ignore and link checks"],
+      "prd_impact": "update-required", "knowledge_graph_events": ["handoff", "verification", "blocker"]
+    },
+    {
+      "id": "graph-closure", "title": "Record graph closure policy override",
+      "role": "Agentic Workflow Orchestrator", "write_scope": ["docs/P4_WORKFLOW.json"],
+      "depends_on": ["docs-closure"],
+      "acceptance_criteria": ["Honor explicit-save-only user policy; no persistent memory writes"],
+      "validation": ["Review no memory/graph mutations"],
+      "prd_impact": "none", "knowledge_graph_events": ["deferred-by-user-policy"]
+    },
+    {
+      "id": "gate", "title": "Review acceptance and report local readiness versus external blockers",
+      "role": "Release Gatekeeper", "write_scope": ["docs/P4_STATUS.md"],
+      "depends_on": ["docs-closure", "graph-closure"],
+      "acceptance_criteria": ["Every requirement has passed evidence or an owned blocker", "No commit, push, publication or submission without request"],
+      "validation": ["Final scope/security/compatibility review", "Reconcile test, reproduction and missing-input evidence"],
+      "prd_impact": "update-required", "knowledge_graph_events": ["verification", "handoff", "blocker"]
+    }
+  ],
+  "parallel_groups": [],
+  "loops": [
+    {
+      "id": "implementation-regression",
+      "sequence": ["Integration and Handoff Coordinator", "Independent Reviewer and Critic", "Integration and Handoff Coordinator"],
+      "max_iterations": 3,
+      "finding_condition": "A reproducible defect, invalid assertion or unmet acceptance criterion is identified",
+      "acceptance_condition": "Contract, negative, regression and integration tests pass with no unresolved local finding",
+      "escalation_role": "user/team owner for a repeated blocker"
+    },
+    {
+      "id": "reproduction-and-closure",
+      "sequence": ["Integration and Handoff Coordinator", "Release Gatekeeper"],
+      "max_iterations": 3,
+      "finding_condition": "Fresh setup, full-size synthetic execution, documentation or final-diff review exposes a concrete gap",
+      "acceptance_condition": "Clean-setup identical-byte reproduction, documented commands and truthful status agree",
+      "escalation_role": "user/team owner for unavailable production inputs"
+    }
+  ],
+  "finalization": {
+    "prd_update_task_id": "docs-closure",
+    "project_context_update_task_id": "docs-closure",
+    "graph_closure_task_id": "graph-closure",
+    "release_gatekeeper_task_id": "gate",
+    "final_report_sections": ["What changed in code", "What changed in PRD/docs", "What was tested", "Unresolved clarification or inconsistency"]
+  },
+  "validation_results": [
+    {"check": "P4 regression suite", "result": "pass", "evidence": "47 tests passed, including LF/CRLF source portability without weakening data/weight byte checks"},
+    {"check": "Official evaluator compatibility", "result": "pass", "evidence": "All four committed baseline outputs validate and their complete public metric results agree exactly"},
+    {"check": "Full-size synthetic fresh-setup reproduction", "result": "pass", "evidence": "199319 rows; fresh virtual environment, isolated checkout, relocated identical inputs, identical submission bytes; runs/clean-setup-verification.json"},
+    {"check": "Final synthetic CLI workflow and documentation/source checks", "result": "pass", "evidence": "runs/verified-demo; workflow validator 0 errors/0 warnings; pip check, syntax, links, ignore checks and diff checks passed"},
+    {"check": "Temporary verification checkout cleanup", "result": "blocked", "reason": "Automatic approval review rejected deletion of runs/clean-setup-temp: blocked by policy. Evidence preserved; generated temporary directory remains ignored."},
+    {"check": "Real supplied-match inference and external neural/decoder benchmark", "result": "blocked", "reason": "User confirmed missing repository inputs are not currently available"},
+    {"check": "Actual teammate reproduction and final submission package", "result": "blocked", "reason": "Requires real pipeline/data and a teammate; no teammate run or submission claimed"}
+  ]
+}

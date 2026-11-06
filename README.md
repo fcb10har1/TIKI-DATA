@@ -53,6 +53,26 @@ getting to the actual question. See [CHALLENGE.md](CHALLENGE.md).
 
 ## Try it right now
 
+### Team P4 integration
+
+The integration runner, P1–P3 handoff contracts, external-match benchmarks,
+experiment log, holdout freeze and reproduction checks are documented in
+**[docs/P4.md](docs/P4.md)**. Current integration status and remaining team inputs:
+**[docs/P4_STATUS.md](docs/P4_STATUS.md)**.
+
+With the restricted tracking assets installed, one command generates and
+validates a full baseline CSV:
+
+```bash
+python -m tiki_data run --config configs/baseline.json --out runs/v1-rules
+```
+
+Use the pinned P4 environment described in the runbook. To verify the complete
+integration without restricted data, run `python -m tiki_data demo --out runs/demo`.
+The demo is explicitly synthetic and establishes no football-model accuracy.
+
+### Official starter
+
 The scorer, a 5-minute ground truth and four working baselines are in this repository. No
 enrolment, no download, no data:
 
