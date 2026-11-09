@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "evaluation_manifest": "../data/external/manifest.json",
+  "features": {
+    "external_train_01": "../data/external/external_train_01_features.npz",
+    "external_val_02": "../data/external/external_val_02_features.npz",
+    "external_test_03": "../data/external/external_test_03_features.npz"
+  },
+  "feature_schema": "../data/external/feature_schema.json",
+  "seed": 42,
+  "fps": 25,
+  "model": {"width": 32, "kernel": 3, "dilations": [1, 2, 4, 8, 16], "dropout": 0.1},
+  "training": {
+    "epochs": 60, "patience": 8, "batch_size": 16, "core_frames": 512,
+    "learning_rate": 0.001, "weight_decay": 0.0001, "gradient_clip": 1.0,
+    "class_weights": "none", "device": "cpu", "threads": 1
+  },
+  "augmentation": {
+    "point_probability": 0.0, "ball_stretch_probability": 0.0,
+    "ball_stretch_frames": [25, 250]
+  }
+}

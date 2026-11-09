@@ -61,6 +61,7 @@ __pycache__/
 .venv/
 venv/
 env/
+.venv-p2/
 .DS_Store
 
 # P4 local experiments and derived match artifacts. Never publish frame-level data.

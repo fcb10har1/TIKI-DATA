@@ -1,0 +1,5 @@
+# Tested with CPython 3.13.1 on Windows, CPU; independent of P4's older pins.
+# CPU wheel: pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+torch==2.10.0
+numpy==2.4.6
+pandas==3.0.3
