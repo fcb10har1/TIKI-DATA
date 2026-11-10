@@ -7,7 +7,15 @@ and separate frame-aligned H/A/D labels. The tracked handoff is under
 `data/external/idsse_processed/`; raw IDSSE XML remains ignored. The fixed split
 contains four train matches, two validation matches and one untouched test match.
 
-From the repository root, P2 should merge/pull P1 and run:
+P2 should first merge the remote P1 branch into P2:
+
+```powershell
+git fetch origin
+git checkout P2
+git merge origin/P1
+```
+
+Then, from the repository root, run:
 
 ```powershell
 py -3.13 -m venv .venv-p2

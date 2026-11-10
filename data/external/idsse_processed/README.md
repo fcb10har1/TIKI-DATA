@@ -6,9 +6,12 @@ Each match folder contains `features.npz` (the 19 P1 inputs), `labels.csv`
 (`frame,label`), `match.json`, and `conversion.json`. Labels come only from the
 IDSSE `BallPossession` and `BallStatus` fields; those fields never enter features.
 
-From the repository root, P2 should run:
+P2 should merge the P1 handoff, then run from the repository root:
 
 ```powershell
+git fetch origin
+git checkout P2
+git merge origin/P1
 pip install -r requirements-p2.txt
 python -m pytest tests/test_p1.py tests/test_p2.py
 python -m tiki_data.p2 train --config configs/p2_idsse_v1.json --out artifacts/p2-idsse-v1
