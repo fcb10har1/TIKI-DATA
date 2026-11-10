@@ -42,4 +42,5 @@ At delivery, only synthetic execution, alignment, training and checkpoint-reload
 checks have run. No real football model has been trained and no real accuracy
 or robustness gain is reported. Real experiments require P1's shared feature
 extractor, aligned external targets, reviewed feature lineage, and agreed whole-
-match splits. Reproduction commands and limitations are in [P2.md](P2.md).
+match splits. Reproduction commands and limitations are in
+[P1-to-P2 V1 Handoff.md](P1-to-P2%20V1%20Handoff.md).

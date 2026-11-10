@@ -38,11 +38,15 @@ export MTAH_DATA_DIR=/mnt/big-disk/mtah2027       # macOS / Linux
 $env:MTAH_DATA_DIR = "D:\mtah2027"                # Windows PowerShell
 ```
 
-## Nothing in here is committed
+## Restricted match data is not committed
 
-`.gitignore` keeps everything except this README out of git. That is not only tidiness — the terms
-you accepted cover redistribution, and a public fork with the match video in it is redistribution.
-Your own submission repository has to be public too, so check the same thing there.
+`.gitignore` keeps the restricted challenge match assets out of Git. That is not only tidiness —
+the terms you accepted cover redistribution, and a public fork with the match video in it is
+redistribution. Your own submission repository has to be public too, so check the same thing there.
+
+The sole exception is `external/idsse_processed/`: this is a derived handoff from the separately
+licensed CC BY 4.0 IDSSE dataset, with its attribution and provenance included. The raw IDSSE XML
+under `external/idsse_raw/` remains ignored.
 
 ## You do not need any of this to run the scorer
 

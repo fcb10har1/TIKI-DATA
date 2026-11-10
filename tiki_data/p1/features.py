@@ -136,3 +136,103 @@ def compute_frame(home_positions, away_positions, home_speeds, away_speeds,
                 np.linalg.norm(positions.mean(axis=0) - ball))
 
     return values, observed
+
+
+def compute_frames(home_positions, away_positions, home_speeds, away_speeds,
+                   ball_positions, ball_speeds, chunk_size=8192):
+    """Vectorized equivalent of :func:`compute_frame` for complete matches.
+
+    Player slots remain anonymous and may be absent (NaN) on any frame. Processing
+    in chunks bounds temporary memory for full 25 Hz matches while preserving the
+    exact provider-neutral feature definitions used by the supplied-match adapter.
+    """
+    home_positions = np.asarray(home_positions)
+    away_positions = np.asarray(away_positions)
+    home_speeds = np.asarray(home_speeds)
+    away_speeds = np.asarray(away_speeds)
+    ball_positions = np.asarray(ball_positions)
+    ball_speeds = np.asarray(ball_speeds)
+    require(home_positions.ndim == away_positions.ndim == 3
+            and home_positions.shape[2] == away_positions.shape[2] == 2,
+            "batched positions must have shape frames x players x 2")
+    n_frames = home_positions.shape[0]
+    require(away_positions.shape[0] == n_frames
+            and home_speeds.shape == home_positions.shape[:2]
+            and away_speeds.shape == away_positions.shape[:2]
+            and ball_positions.shape == (n_frames, 2)
+            and ball_speeds.shape == (n_frames,), "batched observations are not frame-aligned")
+    require(isinstance(chunk_size, int) and chunk_size > 0, "chunk_size must be positive")
+
+    values = np.zeros((n_frames, len(FEATURE_NAMES)), dtype=np.float32)
+    observed = np.zeros_like(values, dtype=np.bool_)
+
+    for start in range(0, n_frames, chunk_size):
+        stop = min(start + chunk_size, n_frames)
+        ball = ball_positions[start:stop].astype(np.float64, copy=False)
+        ball_speed = ball_speeds[start:stop].astype(np.float64, copy=False)
+        ball_valid = np.isfinite(ball).all(axis=1)
+        speed_valid = ball_valid & np.isfinite(ball_speed)
+        values[start:stop, INDEX["ball_speed_mps"]][speed_valid] = ball_speed[speed_valid]
+        observed[start:stop, INDEX["ball_speed_mps"]][speed_valid] = True
+
+        for side, positions_source, speeds_source in (
+                ("home", home_positions, home_speeds),
+                ("away", away_positions, away_speeds)):
+            positions = positions_source[start:stop].astype(np.float64, copy=False)
+            speeds = speeds_source[start:stop].astype(np.float64, copy=False)
+            position_valid = np.isfinite(positions).all(axis=2)
+            counts = position_valid.sum(axis=1)
+            count_name = side + "_players_observed"
+            values[start:stop, INDEX[count_name]] = counts
+            observed[start:stop, INDEX[count_name]] = True
+
+            enough = counts >= 2
+            for coordinate, suffix in ((1, "_width_m"), (0, "_length_m")):
+                coordinate_values = positions[:, :, coordinate]
+                low = np.min(np.where(position_valid, coordinate_values, np.inf), axis=1)
+                high = np.max(np.where(position_valid, coordinate_values, -np.inf), axis=1)
+                name = side + suffix
+                values[start:stop, INDEX[name]][enough] = high[enough] - low[enough]
+                observed[start:stop, INDEX[name]][enough] = True
+
+            scalar_valid = np.isfinite(speeds) & position_valid
+            scalar_counts = scalar_valid.sum(axis=1)
+            has_speed = scalar_counts > 0
+            speed_mean = np.divide(np.where(scalar_valid, speeds, 0).sum(axis=1),
+                                   scalar_counts, out=np.zeros(len(counts)), where=has_speed)
+            speed_name = side + "_mean_speed_mps"
+            values[start:stop, INDEX[speed_name]][has_speed] = speed_mean[has_speed]
+            observed[start:stop, INDEX[speed_name]][has_speed] = True
+
+            has_position = ball_valid & (counts > 0)
+            differences = positions - ball[:, None, :]
+            distances = np.sqrt(np.sum(differences * differences, axis=2))
+            distances[~position_valid | ~ball_valid[:, None]] = np.inf
+            nearest = np.min(distances, axis=1)
+            nearest_name = side + "_nearest_ball_m"
+            values[start:stop, INDEX[nearest_name]][has_position] = nearest[has_position]
+            observed[start:stop, INDEX[nearest_name]][has_position] = True
+
+            has_second = ball_valid & (counts >= 2)
+            second = np.partition(distances, 1, axis=1)[:, 1]
+            second_name = side + "_second_nearest_ball_m"
+            values[start:stop, INDEX[second_name]][has_second] = second[has_second]
+            observed[start:stop, INDEX[second_name]][has_second] = True
+
+            for radius in (3, 5):
+                radius_name = "{}_players_within_{}m".format(side, radius)
+                inside = np.count_nonzero(distances <= radius, axis=1)
+                values[start:stop, INDEX[radius_name]][has_position] = inside[has_position]
+                observed[start:stop, INDEX[radius_name]][has_position] = True
+
+            sums = np.where(position_valid[:, :, None], positions, 0).sum(axis=1)
+            centroids = np.divide(sums, counts[:, None], out=np.zeros_like(sums),
+                                  where=counts[:, None] > 0)
+            centroid_distance = np.linalg.norm(centroids - ball, axis=1)
+            centroid_name = "ball_to_" + side + "_centroid_m"
+            values[start:stop, INDEX[centroid_name]][has_position] = centroid_distance[has_position]
+            observed[start:stop, INDEX[centroid_name]][has_position] = True
+
+    require(np.isfinite(values).all(), "computed feature matrix contains nonfinite values")
+    require((values[~observed] == 0).all(), "unobserved features must retain zero placeholders")
+    return values, observed

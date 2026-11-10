@@ -1,6 +1,6 @@
 # P1 V1 status
 
-Implemented on 9 November 2026 on branch `P1`.
+Implemented on 9–10 November 2026 on branch `P1`.
 
 ## Delivered
 
@@ -11,6 +11,8 @@ Implemented on 9 November 2026 on branch `P1`.
 - P2-compatible committed feature schema and ball-dependent allowlist.
 - CLI export of `features.npz`, `match.json` and `feature_schema.json`.
 - Synthetic geometry, missingness, NPZ round-trip and actual P2 TCN contract tests.
+- Streaming IDSSE XML converter with original-frame and half alignment.
+- Seven external match feature batches, labels, manifest and P2 training config.
 
 ## Verification evidence
 
@@ -19,9 +21,12 @@ Implemented on 9 November 2026 on branch `P1`.
   frame, period, finite-value, feature-order and zero-placeholder contracts.
 - P2 schema validation accepted the exact committed feature order and
   ball-dependent allowlist.
-- Three P1 tests passed, including construction of the actual P2 `TCN` and a
+- Five P1 tests passed, including construction of the actual P2 `TCN` and a
   validated `(N,3)` `ProbabilityBatch` from the P1 schema.
-- Complete regression suite passed: 58 tests across P1, P2 and P4.
+- P2's loader accepted four train and two validation matches, all with the exact
+  ordered 19-feature schema; the test match was declared but not opened.
+- IDSSE conversion produced 1,002,644 frames and all H/A/D classes in every match.
+- Complete regression suite passed: 60 tests across P1, P2 and P4.
 - `compileall` and `git diff --check` passed.
 
 The successful ignored local handoff is
@@ -36,11 +41,10 @@ clear regenerated match-derived outputs before committing notebook changes.
 
 - No possession accuracy improvement is claimed.
 - No supplied-match labels or public ground truth were used.
-- No external football matches have yet been converted or used for training.
-- No IDSSE raw converter, external manifest or production checkpoint is included.
+- No real TCN checkpoint or external accuracy result is claimed yet.
+- Raw IDSSE XML is not committed; only the processed CC BY 4.0 handoff is tracked.
 - No Smart Tagging, homography or video feature enters P2 V1.
 
-The immediate handoff to P2 is the schema plus a validated BAR-ATH feature
-artifact for transport/inference integration. Real TCN training remains blocked
-on external tracking/target acquisition and conversion using the same feature
-definitions.
+The immediate handoff to P2 is `configs/p2_idsse_v1.json` plus the validated
+processed dataset under `data/external/idsse_processed/`. P2 can now begin real
+external TCN training without the raw IDSSE XML.

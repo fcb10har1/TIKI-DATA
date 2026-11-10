@@ -1,4 +1,35 @@
-# P2: TCN training and inference V1
+# P1 to P2 V1 handoff
+
+## Ready handoff
+
+P1 has converted all seven IDSSE matches into P2-compatible 19-feature batches
+and separate frame-aligned H/A/D labels. The tracked handoff is under
+`data/external/idsse_processed/`; raw IDSSE XML remains ignored. The fixed split
+contains four train matches, two validation matches and one untouched test match.
+
+P2 should first merge the remote P1 branch into P2:
+
+```powershell
+git fetch origin
+git checkout P2
+git merge origin/P1
+```
+
+Then, from the repository root, run:
+
+```powershell
+py -3.13 -m venv .venv-p2
+.\.venv-p2\Scripts\python.exe -m pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+.\.venv-p2\Scripts\python.exe -m pip install -r requirements-p2.txt
+.\.venv-p2\Scripts\python.exe -m pytest tests/test_p1.py tests/test_p2.py
+.\.venv-p2\Scripts\python.exe -m tiki_data.p2 train --config configs/p2_idsse_v1.json --out artifacts/p2-idsse-v1
+```
+
+Do not inspect or use the test labels for model, feature, decoder or
+hyperparameter selection. The package README contains provenance and licence
+details: [IDSSE processed handoff](../data/external/idsse_processed/README.md).
+
+## P2 technical reference
 
 P2 uses the existing [team contracts](INTERFACES.md) without changing P1/P3/P4
 or official code. The adapter is `tiki_data.p2.inference:predict`. Its only file
@@ -7,11 +38,10 @@ class order and feature schema are embedded in that checkpoint. Model output is
 `ProbabilityBatch`, columns **H,A,D**. `X` is an ignored target/decoder abstention,
 never a fourth neural class. The optional CSV is `frame,p_H,p_A,p_D`.
 
-**Current status:** implementation and synthetic execution verification only.
-No external football training, real possession accuracy, real-model robustness
-gain or competition submission is claimed. See [P2_STATUS.md](P2_STATUS.md) for
-actual run evidence. Synthetic checkpoints are explicitly marked and require
-`allow_synthetic=true` to load through the adapter.
+**Current status:** real external P1 training inputs and the P2 configuration are
+ready and have passed P2's own loader. No real model has yet been trained, so no
+possession accuracy, robustness gain or competition result is claimed. See
+[P2_STATUS.md](P2_STATUS.md) for P2 implementation evidence.
 
 ## Install and verify
 
@@ -65,9 +95,10 @@ This checks the augmentation path, not its value on real tracking.
 
 ## External training input: P1 and team handoff
 
-The current checkout contains no P1 feature code, feature NPZs or external raw
-tracking/label exports. `configs/p2_v1.json` is an explicit template and fails
-on missing inputs. It never silently substitutes synthetic data. Supply:
+The checkout contains the complete P1 handoff at
+`data/external/idsse_processed/` and its runnable training configuration at
+`configs/p2_idsse_v1.json`. P2 never silently substitutes synthetic data. The
+delivered contract consists of:
 
 1. A P4-compatible external manifest as described in [P4.md](P4.md), with
    `schema_version`, `dataset_id`, `kind=external`, and `matches`. Each match
@@ -146,11 +177,11 @@ target-only conversion helper:
 | BallStatus 1 and BallPossession 2 | A |
 | Any other/unknown combination | X, excluded from loss |
 
-P1 must align these raw arrays by actual frame IDs and game section, use match
-metadata for home/away mapping, and retain original frame IDs in conversion
+P1 aligns these raw arrays by actual frame IDs and game section, uses match
+metadata for home/away mapping, and retains original frame IDs in conversion
 metadata even if rebasing each external timeline to zero. `BallPossession` and
-`BallStatus` are **targets only**. This V1 does not implement or claim a verified
-raw IDSSE XML-to-P1 feature converter; the helper takes already aligned arrays.
+`BallStatus` are **targets only**. `tiki_data.p1.idsse` implements and tests the
+streaming XML conversion, including km/h-to-m/s conversion and half boundaries.
 
 The competition [control definition](https://github.com/metrica-sports/more-than-a-hack-2027/blob/main/CHALLENGE.md)
 retains the previous team during loose/contested live play and excludes uncontrolled
@@ -162,8 +193,9 @@ proxy results. Raw code frequencies, unknown rates, frame continuity and half
 coverage still need auditing on actual files. Optical-tracking quality and
 missingness can also differ from automatic tactical-video tracking.
 
-No external matches have been downloaded or converted in this implementation.
-Downloading raw data alone would not provide P1's shared feature computation.
+All seven external matches have been converted locally into 1,002,644 total
+frames. The tracked processed package is a reproducible transformation; raw XML
+is intentionally excluded from Git.
 The [official rules](https://github.com/metrica-sports/more-than-a-hack-2027/blob/main/RULES.md)
 permit accessible external data and prohibit hand labels on the supplied match;
 the public five-minute labels are never used to fit weights, normalization,
@@ -171,12 +203,12 @@ features, decoder settings or hyperparameters.
 
 ## Real training and inference
 
-Update the external paths/IDs in a copy of `configs/p2_v1.json`. Paths resolve
-relative to that config; manifest label paths resolve relative to the manifest.
-P2's companion config keeps P4's strict manifest schema intact.
+Use `configs/p2_idsse_v1.json`; all paths and real IDSSE match IDs are already
+configured. Paths resolve relative to that config; label paths resolve relative
+to the manifest.
 
 ```powershell
-python -m tiki_data.p2 train --config configs/p2_v1.json --out artifacts/p2-v1
+python -m tiki_data.p2 train --config configs/p2_idsse_v1.json --out artifacts/p2-idsse-v1
 python -m tiki_data.p2 infer --features data/features/BAR-ATH_features.npz --match data/features/BAR-ATH_match.json --checkpoint artifacts/p2-v1/best.pt --out runs/p2-bar-ath
 ```
 

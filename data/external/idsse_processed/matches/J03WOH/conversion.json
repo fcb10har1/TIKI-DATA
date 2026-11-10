@@ -1,0 +1,73 @@
+{
+  "coordinate_conversion": "none; IDSSE X/Y are already pitch-centred metres",
+  "feature_observed_fraction": {
+    "away_length_m": 1.0,
+    "away_mean_speed_mps": 1.0,
+    "away_nearest_ball_m": 1.0,
+    "away_players_observed": 1.0,
+    "away_players_within_3m": 1.0,
+    "away_players_within_5m": 1.0,
+    "away_second_nearest_ball_m": 1.0,
+    "away_width_m": 1.0,
+    "ball_speed_mps": 1.0,
+    "ball_to_away_centroid_m": 1.0,
+    "ball_to_home_centroid_m": 1.0,
+    "home_length_m": 1.0,
+    "home_mean_speed_mps": 1.0,
+    "home_nearest_ball_m": 1.0,
+    "home_players_observed": 1.0,
+    "home_players_within_3m": 1.0,
+    "home_players_within_5m": 1.0,
+    "home_second_nearest_ball_m": 1.0,
+    "home_width_m": 1.0
+  },
+  "label_counts": {
+    "A": 32819,
+    "D": 65269,
+    "H": 39126,
+    "X": 0
+  },
+  "match_id": "J03WOH",
+  "period_source_frames": [
+    {
+      "n_frames": 69424,
+      "name": "firstHalf",
+      "start": 10000,
+      "stop_inclusive": 79423
+    },
+    {
+      "n_frames": 67790,
+      "name": "secondHalf",
+      "start": 100000,
+      "stop_inclusive": 167789
+    }
+  ],
+  "pitch_metres": [
+    105.0,
+    68.0
+  ],
+  "schema_version": 1,
+  "source": "https://doi.org/10.6084/m9.figshare.28196177",
+  "source_files": {
+    "events": "DFL_03_02_events_raw_DFL-COM-000002_DFL-MAT-J03WOH.xml",
+    "match_information": "DFL_02_01_matchinformation_DFL-COM-000002_DFL-MAT-J03WOH.xml",
+    "positions": "DFL_04_03_positions_raw_observed_DFL-COM-000002_DFL-MAT-J03WOH.xml"
+  },
+  "speed_conversion": "IDSSE S divided by 3.6 (km/h to m/s)",
+  "target_mapping": {
+    "BallStatus=0": "D",
+    "BallStatus=1 and BallPossession=1": "H",
+    "BallStatus=1 and BallPossession=2": "A",
+    "otherwise": "X"
+  },
+  "teams": {
+    "away": {
+      "id": "DFL-CLU-000011",
+      "name": "SSV Jahn Regensburg"
+    },
+    "home": {
+      "id": "DFL-CLU-00000P",
+      "name": "Fortuna D\u00fcsseldorf"
+    }
+  }
+}

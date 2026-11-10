@@ -1,0 +1,73 @@
+{
+  "coordinate_conversion": "none; IDSSE X/Y are already pitch-centred metres",
+  "feature_observed_fraction": {
+    "away_length_m": 1.0,
+    "away_mean_speed_mps": 1.0,
+    "away_nearest_ball_m": 1.0,
+    "away_players_observed": 1.0,
+    "away_players_within_3m": 1.0,
+    "away_players_within_5m": 1.0,
+    "away_second_nearest_ball_m": 1.0,
+    "away_width_m": 1.0,
+    "ball_speed_mps": 1.0,
+    "ball_to_away_centroid_m": 1.0,
+    "ball_to_home_centroid_m": 1.0,
+    "home_length_m": 1.0,
+    "home_mean_speed_mps": 1.0,
+    "home_nearest_ball_m": 1.0,
+    "home_players_observed": 1.0,
+    "home_players_within_3m": 1.0,
+    "home_players_within_5m": 1.0,
+    "home_second_nearest_ball_m": 1.0,
+    "home_width_m": 1.0
+  },
+  "label_counts": {
+    "A": 31956,
+    "D": 73184,
+    "H": 36421,
+    "X": 0
+  },
+  "match_id": "J03WN1",
+  "period_source_frames": [
+    {
+      "n_frames": 69288,
+      "name": "firstHalf",
+      "start": 10000,
+      "stop_inclusive": 79287
+    },
+    {
+      "n_frames": 72273,
+      "name": "secondHalf",
+      "start": 100000,
+      "stop_inclusive": 172272
+    }
+  ],
+  "pitch_metres": [
+    105.0,
+    68.0
+  ],
+  "schema_version": 1,
+  "source": "https://doi.org/10.6084/m9.figshare.28196177",
+  "source_files": {
+    "events": "DFL_03_02_events_raw_DFL-COM-000001_DFL-MAT-J03WN1.xml",
+    "match_information": "DFL_02_01_matchinformation_DFL-COM-000001_DFL-MAT-J03WN1.xml",
+    "positions": "DFL_04_03_positions_raw_observed_DFL-COM-000001_DFL-MAT-J03WN1.xml"
+  },
+  "speed_conversion": "IDSSE S divided by 3.6 (km/h to m/s)",
+  "target_mapping": {
+    "BallStatus=0": "D",
+    "BallStatus=1 and BallPossession=1": "H",
+    "BallStatus=1 and BallPossession=2": "A",
+    "otherwise": "X"
+  },
+  "teams": {
+    "away": {
+      "id": "DFL-CLU-00000B",
+      "name": "Bayer 04 Leverkusen"
+    },
+    "home": {
+      "id": "DFL-CLU-00000S",
+      "name": "VfL Bochum 1848"
+    }
+  }
+}
