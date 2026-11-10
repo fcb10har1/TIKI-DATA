@@ -55,6 +55,18 @@ getting to the actual question. See [CHALLENGE.md](CHALLENGE.md).
 
 ### Team P4 integration
 
+The complete P1-P4 workflow, including tracking rules and Viterbi decoding, is
+documented in **[docs/P3.md](docs/P3.md)**. Train, compare three methods, freeze the
+validation winner, evaluate it once on the external test match, and reproduce:
+
+```bash
+python -m tiki_data full --config configs/p2_idsse_v1.json --out runs/full-v1
+```
+
+The seven converted external matches are included. Supplied BAR-ATH inference
+requires the separately licensed ATD assets or `--supplied-features`.
+The first integrated results are in **[docs/INTEGRATION_2026-11-11.md](docs/INTEGRATION_2026-11-11.md)**.
+
 The integration runner, P1–P3 handoff contracts, external-match benchmarks,
 experiment log, holdout freeze and reproduction checks are documented in
 **[docs/P4.md](docs/P4.md)**. Current integration status and remaining team inputs:

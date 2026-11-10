@@ -48,6 +48,15 @@ def main(argv=None):
     index = commands.add_parser("experiments", help="export the shared local experiment index")
     index.add_argument("--root", default="runs")
     index.add_argument("--out", default="runs/experiments.csv")
+    full = commands.add_parser("full", help="train, compare P1-P4 methods, freeze, test once and reproduce")
+    full.add_argument("--config", required=True, help="P2 training config with the fixed external split")
+    full.add_argument("--out", required=True, help="new workflow directory")
+    full.add_argument("--checkpoint", help="reuse trained weights instead of training again")
+    full.add_argument("--bootstrap", type=int, default=1000)
+    full.add_argument("--skip-test", action="store_true", help="freeze but preserve the uninspected holdout")
+    full.add_argument("--switch-cost", type=float, default=6.0)
+    full.add_argument("--dead-cost", type=float, default=3.0)
+    full.add_argument("--supplied-features", help="existing BAR-ATH P1 NPZ; otherwise use installed ATD assets")
     args = parser.parse_args(argv)
     try:
         if args.command == "run":
@@ -78,6 +87,10 @@ def main(argv=None):
         elif args.command == "demo":
             from .demo import demonstrate
             result = demonstrate(args.out)
+        elif args.command == "full":
+            from .workflow import execute
+            result = execute(args.config, args.out, args.checkpoint, args.bootstrap, args.skip_test,
+                             args.switch_cost, args.dead_cost, args.supplied_features)
         else:
             from .experiments import export
             result = {"status": "complete", "records": export(args.root, args.out), "index": args.out}

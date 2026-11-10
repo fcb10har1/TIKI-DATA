@@ -1,5 +1,8 @@
 # P4 task board and acceptance status
 
+Historical P4 delivery record. Later integration, real training and external
+evaluation results are in [INTEGRATION_2026-11-11.md](INTEGRATION_2026-11-11.md).
+
 P4 tooling is implemented and locally verified on `P4`.
 The user confirmed that inputs absent from the repository are not currently
 available. Real V1 acceptance remains **blocked**; a synthetic score is not a
