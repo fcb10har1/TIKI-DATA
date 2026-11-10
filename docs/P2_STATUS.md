@@ -69,7 +69,8 @@ metrics are in each run JSON/log, not presented as football results here.
 
 The official challenge documents and IDSSE primary sources were read. Confirmed
 label encodings, unresolved loose-ball/control definition differences, dependency
-instructions, exact input examples and run commands are in [P2.md](P2.md).
+instructions, exact input examples and run commands are in
+[P1-to-P2 V1 Handoff.md](P1-to-P2%20V1%20Handoff.md).
 The technical-document insert is [P2_TECHNICAL.md](P2_TECHNICAL.md).
 P4's older status document remains an unchanged record of its delivery; this file
 records the subsequently added P2 component. No external messages, commits,

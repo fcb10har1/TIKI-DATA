@@ -10,6 +10,7 @@ from tiki_data.artifacts import read_json, write_batch, write_json
 from tiki_data.contracts import MatchSpec
 
 from .features import FEATURE_NAMES, feature_schema
+from .idsse import build_dataset
 from .metrica import build_metrica_features
 
 
@@ -23,8 +24,21 @@ def main(argv=None):
     build.add_argument("--match", help="optional MatchSpec JSON; defaults to BAR-ATH")
     build.add_argument("--pitch-length", type=float, default=GAMES[GAME]["pitch"][0])
     build.add_argument("--pitch-width", type=float, default=GAMES[GAME]["pitch"][1])
+    idsse = commands.add_parser("build-idsse", help="convert all seven IDSSE matches for P2")
+    idsse.add_argument("--raw-dir", required=True, help="directory containing the 21 IDSSE XML files")
+    idsse.add_argument("--out", required=True, help="new processed-data directory")
+    idsse.add_argument("--p2-template", default="configs/p2_v1.json")
+    idsse.add_argument("--p2-config", default="configs/p2_idsse_v1.json")
+    idsse.add_argument("--resume", action="store_true", help="reuse already validated match outputs")
     args = parser.parse_args(argv)
     try:
+        if args.command == "build-idsse":
+            result = build_dataset(Path(args.raw_dir).resolve(), Path(args.out).resolve(),
+                                   Path(args.p2_template).resolve(), Path(args.p2_config).resolve(),
+                                   resume=args.resume)
+            print(json.dumps(dict(result, status="complete"), indent=2, sort_keys=True))
+            return 0
+
         out = Path(args.out).resolve()
         if out.exists():
             raise FileExistsError("output directory already exists: " + str(out))

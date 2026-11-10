@@ -10,7 +10,8 @@ import numpy as np
 from tiki_data.artifacts import read_batch, read_json, write_batch
 from tiki_data.contracts import FeatureBatch, MatchSpec
 from tiki_data.p1.features import (BALL_DEPENDENT, FEATURE_NAMES, compute_frame,
-                                   feature_schema)
+                                   compute_frames, feature_schema)
+from tiki_data.p1.idsse import convert_match
 from tiki_data.p1.metrica import build_metrica_features
 from tiki_data.p2.data import fit_normalization, validate_schema
 from tiki_data.p2.inference import predict_batch
@@ -96,6 +97,70 @@ class P1Tests(unittest.TestCase):
         probabilities = predict_batch(batch, model, normalization, core=16)
         self.assertEqual(probabilities.probabilities.shape, (40, 3))
         probabilities.validate(match)
+
+    def test_vectorized_features_match_scalar_definitions(self):
+        home = np.array([[[0, 0], [4, 0]], [[1, 0], [np.nan, np.nan]]], dtype=np.float32)
+        away = np.array([[[10, 0], [20, 0]], [[9, 0], [19, 0]]], dtype=np.float32)
+        home_speed = np.array([[1, 2], [3, np.nan]], dtype=np.float32)
+        away_speed = np.array([[4, 6], [5, 7]], dtype=np.float32)
+        ball = np.array([[1, 0], [np.nan, np.nan]], dtype=np.float32)
+        ball_speed = np.array([7, np.nan], dtype=np.float32)
+        values, observed = compute_frames(home, away, home_speed, away_speed, ball, ball_speed,
+                                           chunk_size=1)
+        for frame in range(2):
+            home_valid = np.isfinite(home[frame]).all(axis=1)
+            away_valid = np.isfinite(away[frame]).all(axis=1)
+            ball_value = ball[frame] if np.isfinite(ball[frame]).all() else None
+            expected_values, expected_observed = compute_frame(
+                home[frame, home_valid], away[frame, away_valid],
+                home_speed[frame, home_valid & np.isfinite(home_speed[frame])],
+                away_speed[frame, away_valid & np.isfinite(away_speed[frame])],
+                ball_value, ball_speed[frame])
+            np.testing.assert_allclose(values[frame], expected_values, rtol=1e-6, atol=1e-6)
+            np.testing.assert_array_equal(observed[frame], expected_observed)
+
+    def test_idsse_xml_conversion_and_target_separation(self):
+        info = self.root / "DFL_02_01_matchinformation_DFL-COM-X_DFL-MAT-TEST1.xml"
+        info.write_text(
+            "<Root><MatchInformation>"
+            "<General MatchId='DFL-MAT-TEST1' HomeTeamId='HOME' GuestTeamId='AWAY' "
+            "HomeTeamName='Home' GuestTeamName='Away'/>"
+            "<Environment PitchX='105' PitchY='68'/>"
+            "<Teams><Team TeamId='HOME' TeamName='Home'><Players>"
+            "<Player PersonId='h1'/><Player PersonId='h2'/></Players></Team>"
+            "<Team TeamId='AWAY' TeamName='Away'><Players>"
+            "<Player PersonId='a1'/><Player PersonId='a2'/></Players></Team></Teams>"
+            "</MatchInformation></Root>", encoding="utf-8")
+        position = self.root / "DFL_04_03_positions_raw_observed_DFL-COM-X_DFL-MAT-TEST1.xml"
+        frame_sets = []
+        for period, frames in (("firstHalf", (10, 11)), ("secondHalf", (100, 101))):
+            for team, person, x in (("HOME", "h1", 0), ("HOME", "h2", 4),
+                                    ("AWAY", "a1", 10), ("AWAY", "a2", 20)):
+                body = "".join("<Frame N='{}' X='{}' Y='0' S='3.6'/>".format(n, x) for n in frames)
+                frame_sets.append("<FrameSet GameSection='{}' TeamId='{}' PersonId='{}'>{}</FrameSet>".format(
+                    period, team, person, body))
+            labels = ((1, 1), (2, 0)) if period == "firstHalf" else ((2, 1), (-1, 1))
+            body = "".join(
+                "<Frame N='{}' X='1' Y='0' S='7.2' BallPossession='{}' BallStatus='{}'/>".format(
+                    n, possession, status) for n, (possession, status) in zip(frames, labels))
+            frame_sets.append("<FrameSet GameSection='{}' TeamId='BALL' PersonId='ball'>{}</FrameSet>".format(
+                period, body))
+        position.write_text("<Root><Positions>{}</Positions></Root>".format("".join(frame_sets)),
+                            encoding="utf-8")
+        events = self.root / "DFL_03_02_events_raw_DFL-COM-X_DFL-MAT-TEST1.xml"
+        events.write_text("<Root/>", encoding="utf-8")
+        out = self.root / "converted"
+        match = convert_match("TEST1", {"match_information": info, "events": events,
+                                         "positions": position}, out)
+        self.assertEqual(match.n_frames, 4)
+        self.assertEqual(match.periods, ((0, 2), (2, 4)))
+        batch = read_batch(out / "features.npz", match, "features")
+        labels = __import__("evaluation.possession_metrics", fromlist=["read_label_csv"]).read_label_csv(
+            out / "labels.csv")
+        self.assertEqual(labels["label"].tolist(), ["H", "D", "A", "X"])
+        self.assertEqual(batch.feature_names, FEATURE_NAMES)
+        self.assertNotIn("BallPossession", batch.feature_names)
+        self.assertNotIn("BallStatus", batch.feature_names)
 
 
 if __name__ == "__main__":
