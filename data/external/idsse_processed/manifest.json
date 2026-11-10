@@ -1,0 +1,182 @@
+{
+  "dataset_id": "idsse_v1",
+  "kind": "external",
+  "matches": [
+    {
+      "ground_truth": "matches/J03WMX/labels.csv",
+      "group_id": "DFL-MAT-J03WMX",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WMX",
+        "n_frames": 145967,
+        "periods": [
+          [
+            0,
+            70708
+          ],
+          [
+            70708,
+            145967
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "train"
+    },
+    {
+      "ground_truth": "matches/J03WN1/labels.csv",
+      "group_id": "DFL-MAT-J03WN1",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WN1",
+        "n_frames": 141561,
+        "periods": [
+          [
+            0,
+            69288
+          ],
+          [
+            69288,
+            141561
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "train"
+    },
+    {
+      "ground_truth": "matches/J03WOH/labels.csv",
+      "group_id": "DFL-MAT-J03WOH",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WOH",
+        "n_frames": 137214,
+        "periods": [
+          [
+            0,
+            69424
+          ],
+          [
+            69424,
+            137214
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "train"
+    },
+    {
+      "ground_truth": "matches/J03WOY/labels.csv",
+      "group_id": "DFL-MAT-J03WOY",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WOY",
+        "n_frames": 142536,
+        "periods": [
+          [
+            0,
+            69111
+          ],
+          [
+            69111,
+            142536
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "train"
+    },
+    {
+      "ground_truth": "matches/J03WPY/labels.csv",
+      "group_id": "DFL-MAT-J03WPY",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WPY",
+        "n_frames": 146211,
+        "periods": [
+          [
+            0,
+            69131
+          ],
+          [
+            69131,
+            146211
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "validation"
+    },
+    {
+      "ground_truth": "matches/J03WQQ/labels.csv",
+      "group_id": "DFL-MAT-J03WQQ",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WQQ",
+        "n_frames": 142345,
+        "periods": [
+          [
+            0,
+            69204
+          ],
+          [
+            69204,
+            142345
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "validation"
+    },
+    {
+      "ground_truth": "matches/J03WR9/labels.csv",
+      "group_id": "DFL-MAT-J03WR9",
+      "match": {
+        "fps": 25.0,
+        "match_id": "J03WR9",
+        "n_frames": 146810,
+        "periods": [
+          [
+            0,
+            68354
+          ],
+          [
+            68354,
+            146810
+          ]
+        ]
+      },
+      "provenance": {
+        "dataset": "IDSSE (Bassek et al. 2025), CC BY 4.0, DFL-authorized",
+        "label_provenance": "DFL BallPossession/BallStatus mapped by tiki_data.p2.data.idsse_targets",
+        "source": "https://doi.org/10.6084/m9.figshare.28196177"
+      },
+      "split": "test"
+    }
+  ],
+  "schema_version": 1
+}

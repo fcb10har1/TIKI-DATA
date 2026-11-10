@@ -245,8 +245,6 @@ IDSSE `BallPossession` and `BallStatus` fields; those fields never enter feature
 From the repository root, P2 should run:
 
 ```powershell
-git lfs install
-git lfs pull
 pip install -r requirements-p2.txt
 python -m pytest tests/test_p1.py tests/test_p2.py
 python -m tiki_data.p2 train --config configs/p2_idsse_v1.json --out artifacts/p2-idsse-v1

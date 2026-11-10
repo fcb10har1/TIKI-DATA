@@ -1,0 +1,171 @@
+{
+  "ball_dependent": [
+    "ball_speed_mps",
+    "home_nearest_ball_m",
+    "away_nearest_ball_m",
+    "home_second_nearest_ball_m",
+    "away_second_nearest_ball_m",
+    "home_players_within_3m",
+    "away_players_within_3m",
+    "home_players_within_5m",
+    "away_players_within_5m",
+    "ball_to_home_centroid_m",
+    "ball_to_away_centroid_m"
+  ],
+  "features": [
+    {
+      "definition": "Observed scalar ball speed in metres per second",
+      "name": "ball_speed_mps",
+      "sources": [
+        "ball.speed"
+      ]
+    },
+    {
+      "definition": "Minimum ball-to-observed-home-player distance in metres",
+      "name": "home_nearest_ball_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Minimum ball-to-observed-away-player distance in metres",
+      "name": "away_nearest_ball_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Second-smallest ball-to-home-player distance in metres",
+      "name": "home_second_nearest_ball_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Second-smallest ball-to-away-player distance in metres",
+      "name": "away_second_nearest_ball_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Observed home players within three metres of the ball",
+      "name": "home_players_within_3m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Observed away players within three metres of the ball",
+      "name": "away_players_within_3m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Observed home players within five metres of the ball",
+      "name": "home_players_within_5m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Observed away players within five metres of the ball",
+      "name": "away_players_within_5m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Distance from the ball to the observed home-team centroid in metres",
+      "name": "ball_to_home_centroid_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Distance from the ball to the observed away-team centroid in metres",
+      "name": "ball_to_away_centroid_m",
+      "sources": [
+        "ball.x",
+        "ball.y",
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Observed home-team lateral y range in metres; requires two players",
+      "name": "home_width_m",
+      "sources": [
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Observed away-team lateral y range in metres; requires two players",
+      "name": "away_width_m",
+      "sources": [
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Observed home-team longitudinal x range in metres; requires two players",
+      "name": "home_length_m",
+      "sources": [
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Observed away-team longitudinal x range in metres; requires two players",
+      "name": "away_length_m",
+      "sources": [
+        "away.positions"
+      ]
+    },
+    {
+      "definition": "Mean scalar speed of observed home players in metres per second",
+      "name": "home_mean_speed_mps",
+      "sources": [
+        "home.speeds"
+      ]
+    },
+    {
+      "definition": "Mean scalar speed of observed away players in metres per second",
+      "name": "away_mean_speed_mps",
+      "sources": [
+        "away.speeds"
+      ]
+    },
+    {
+      "definition": "Number of observed home-player tracklets in the frame",
+      "name": "home_players_observed",
+      "sources": [
+        "home.positions"
+      ]
+    },
+    {
+      "definition": "Number of observed away-player tracklets in the frame",
+      "name": "away_players_observed",
+      "sources": [
+        "away.positions"
+      ]
+    }
+  ],
+  "notes": "V1 at 25 Hz. Coordinates are converted to pitch metres before feature calculation. Home/away are match-relative sides. Features are permutation-invariant over temporary track slots. Missing values use zero placeholders with observed=False. The same numerical definitions must be used for external and supplied matches. No labels, ball-status fields or tactical tags enter the feature path."
+}
