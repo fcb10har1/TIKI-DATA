@@ -1,0 +1,191 @@
+P2 scalar ball-speed ablation — 2026-11-11
+
+Result: training without recorded scalar speed modestly improves possession
+spell detection on these two speed-hidden validation matches. The improvement
+is concentrated in J03WQQ; dead-ball recall decreases on both matches. This
+supports B for the missing-speed setting as development evidence, with a
+dead-ball detection tradeoff. It does not establish a Barcelona accuracy gain
+or a reliable across-seed/generalization improvement.
+
+                         spellF1       macroF1       dead-ball recall
+Match       Version      (0..1)        (0..1)        (0..1)
+J03WPY      A            0.507059      0.863628      0.970688
+J03WPY      B            0.509573      0.886271      0.950379
+J03WQQ      A            0.511013      0.850835      0.887348
+J03WQQ      B            0.577650      0.874874      0.871916
+Mean        A            0.509036      0.857231      0.929018
+Mean        B            0.543612      0.880573      0.911147
+B minus A mean           +0.034576     +0.023341     -0.017871
+
+spellF1 is the repository ranking metric: mean F1 across temporal IoU
+thresholds 0.3, 0.4, 0.5, 0.6, 0.7. macroF1 covers H/A/D. Dead-ball recall
+is confusion[D,D] / sum(confusion[D,:]), including abstentions as misses.
+Means weight the two matches equally. All results use speed-hidden inputs
+and the same fixed P3 decoder; no fully observed validation score appears
+in this comparison table.
+
+B completed 35 epochs and selected epoch 27. Its checkpoint reloaded and
+reproduced its selection metrics exactly. B checkpoint SHA256:
+315b04fae0f2d570105081c3973bba75f011dab5e744175048b029c95ed62a97.
+
+Verified: all 567278 training and 288556 validation frames have zero speed
+values and False speed flags under B. All other 18 values/flags, frame IDs,
+period IDs, labels and feature order match A. A and B use exactly the same
+288556 speed-hidden validation frames at final evaluation. Every encoded
+model input is finite; the speed-value and flag input channels are zero.
+
+Training normalization has speed count/mean/scale 0/0/1 for B versus
+567278/7.770162855397725/5.891611551084746 for A. All other channel moments
+are identical, fitted only on the four training matches.
+
+Public pipeline check: 7500 frames, original video IDs 11185..18684 inclusive;
+zero recorded speed observations; all 6615 available ball positions preserved.
+Both models produced finite inputs/probabilities and verified frame mappings.
+No public target values or accuracy scores were used. All required data and
+checkpoints were available locally; nothing is missing for this comparison.
+
+Pipeline and implementation
+
+P1 reads IDSSE ball Frame.S in p1/idsse.py:read_ball_timeline and divides
+km/h by 3.6. Metrica ATD x,y,speed is read in p1/metrica.py; a finite x/y
+remains available when scalar speed is NaN. Shared compute_frame/compute_frames
+in p1/features.py produce ball_speed_mps (column 0). Missing data uses
+values[:, 0] = 0 and observed[:, 0] = False. These are separate arrays, not
+a NaN-valued model channel. No velocity is reconstructed from positions.
+
+Version A is the unchanged configs/p2_idsse_v1.json. B adds only:
+  "p1": {"mask_ball_speed": true}
+in configs/p2_idsse_no_ball_speed.json. The shared P1 apply_feature_policy
+supports both providers and existing cached batches without mutating originals.
+The raw P1 build-metrica/build-idsse commands also accept --mask-ball-speed;
+the P4 P1 adapter accepts settings.mask_ball_speed. IDSSE export now resolves
+paths relative to the chosen output/config location so a separate B export
+cannot accidentally refer back to A, and resume rejects a policy mismatch.
+
+P2 load_data applies the P1 policy before normalization/window creation.
+fit_normalization uses observed, in-period TRAINING frames only. An explicitly
+disabled speed channel receives mean 0, scale 1, count 0. Other entirely
+unobserved features still fail by default. encode concatenates 19 normalized
+values and 19 observed flags (38 channels); hidden speed occupies channels
+0 and 19, both zero. All other feature moments are unchanged.
+
+The masking policy is saved inside checkpoint normalization and enforced by
+predict_batch, including for a new unmasked FeatureBatch. An inference setting
+cannot re-enable speed for B. A can be evaluated without speed through the
+P1 policy or p2 infer --mask-ball-speed. No architecture change was made.
+
+Experiment controls
+
+Train: J03WMX, J03WN1, J03WOH, J03WOY (567278 frames).
+Validation: J03WPY (146211 frames), J03WQQ (142345 frames).
+J03WR9 is declared as test but neither its features nor its labels are opened.
+The existing leakage guard hashes the public target file to reject copies;
+public target values are not used for fitting, selection, or scoring here.
+
+Both models: seed 42 for Python/NumPy/PyTorch/DataLoader, deterministic CPU,
+one thread, width 32, kernel 3, dilations 1/2/4/8/16, dropout 0.1, 32387
+parameters, 125-frame receptive field, 512-frame cores, batch 16, AdamW
+learning rate .001, weight decay .0001, gradient clip 1, no class weighting
+or masking augmentation. Budget: maximum 60 epochs, patience 8. Early
+stopping can produce different actual epoch counts under the same budget.
+
+Selection is the existing validation mean spellF1, then macroF1 on TCN
+argmax outputs. A retains its original selection on recorded-speed validation;
+B uses masked-speed validation throughout its training. The selection rule
+and matches are identical; the feature policy is the experiment change.
+Final A/B evaluation hides speed from BOTH, using exactly the same frames
+and labels. These validation matches also selected checkpoints, so they
+are development evidence, not an untouched test or a Barcelona accuracy claim.
+
+Decoder: p3.stage:decode_stage with configs/p2_speed_comparison_decoder.json.
+This copies the existing project settings: temperature 4, minimum possession
+and dead-ball durations 1 second, mean durations 14/10 seconds, restart switch
+.8, turnover fraction .5, start_alive .5, probability floor .0001, no MBR,
+missing_weight 0, fitted=[] (unfitted priors). Both arms share these settings
+and position availability from nearest-player geometry, never scalar speed.
+No decoder search or fitting is performed for this comparison.
+
+A checkpoint: artifacts/p2-idsse-cd715a3/best.pt (epoch 17, 25 epochs run).
+SHA256: c3304e196f17373dd651c8122ca577b4caed299e90dccce54b7ed20accf1bf86.
+The comparison checks training config, checkpoint/input hashes, model/seed,
+feature schema, train-only normalization, torch/numpy/pandas versions, and
+exact reproduction of each checkpoint's original validation metrics.
+
+Commands executed (repository root; output directories must be new)
+
+python -m unittest discover -s tests -p 'test_p[12].py' -v
+python -m unittest discover -s tests -v
+python -m tiki_data.p2 train --config configs/p2_idsse_no_ball_speed.json --out artifacts/p2-idsse-no-ball-speed-20261111
+python -m tiki_data.p2.speed_ablation compare --checkpoint-a artifacts/p2-idsse-cd715a3/best.pt --checkpoint-b artifacts/p2-idsse-no-ball-speed-20261111/best.pt --out runs/speed-ablation-20261111
+python -m tiki_data.p2.speed_ablation public-check --checkpoint-a artifacts/p2-idsse-cd715a3/best.pt --checkpoint-b artifacts/p2-idsse-no-ball-speed-20261111/best.pt --atd-meta "C:/Users/fcb10/Downloads/Telegram Desktop/BAR-ATH_tactical_atd.xml" --atd-raw "C:/Users/fcb10/Downloads/Telegram Desktop/BAR-ATH_tactical_atd.txt" --out runs/speed-ablation-public-20261111
+
+To reproduce BOTH training runs from scratch in new directories:
+
+python -m tiki_data.p2 train --config configs/p2_idsse_v1.json --out artifacts/p2-speed-A-repro
+python -m tiki_data.p2 train --config configs/p2_idsse_no_ball_speed.json --out artifacts/p2-speed-B-repro
+python -m tiki_data.p2.speed_ablation compare --checkpoint-a artifacts/p2-speed-A-repro/best.pt --checkpoint-b artifacts/p2-speed-B-repro/best.pt --out runs/speed-ablation-repro
+
+The recorded run reused A as requested. A fresh retrain is optional. Use the
+requirements-p2.txt environment: CPython 3.13.1, torch 2.10.0+cpu, numpy 2.4.6,
+pandas 3.0.3. Repeated commands need new output directory names. Source and
+data must remain unchanged while training; checkpoints and reports are local
+ignored artifacts. The comparator expects run.json beside each checkpoint.
+
+Changed files
+
+tiki_data/p1/features.py — shared scalar-speed policy, preserving all other columns.
+tiki_data/p1/metrica.py — policy option for supplied tracking.
+tiki_data/p1/adapter.py — P4 P1 settings option.
+tiki_data/p1/idsse.py — policy option, conversion metadata, safe resume/output paths.
+tiki_data/p1/__main__.py — P1 CLI flags.
+tiki_data/p2/data.py — explicit all-missing-channel normalization support.
+tiki_data/p2/train.py — P1 configuration, application before fitting, embedded policy.
+tiki_data/p2/inference.py — persistent masking and A inference override.
+tiki_data/p2/__main__.py — inference CLI override and exported settings.
+tiki_data/p2/speed_ablation.py — audited external comparison and public pipeline check.
+configs/p2_idsse_no_ball_speed.json — B, differing from A only by p1.mask_ball_speed.
+configs/p2_speed_comparison_decoder.json — fixed shared production decoder settings.
+tests/test_p1.py — provider conversion, positions, frame/label alignment, policy tests.
+tests/test_p2.py — finite normalization, embedded inference policy, train/test isolation.
+docs/P2_SPEED_ABLATION.txt — this handoff.
+
+Evidence
+
+runs/speed-ablation-tests-20261111.json — 17 targeted tests and 71 unittest tests passed.
+The separate p3/tests pytest suite was not run (pytest absent); P3/P4 unittest
+regressions passed and the production decoder is exercised in the real comparison.
+artifacts/p2-idsse-no-ball-speed-20261111/ — B best.pt, normalization, epochs and run.
+runs/speed-ablation-training-20261111.log — B training stdout.
+runs/speed-ablation-20261111/results.json — input/checkpoint audits, mask checks,
+full per-match metrics, exact decoder settings, source and environment.
+runs/speed-ablation-20261111/results.csv — per-match and equally weighted means.
+runs/speed-ablation-20261111/{A,B}/{match}/ — probabilities and decoded predictions.
+runs/speed-ablation-public-20261111/checks.json — public pipeline evidence only.
+The public crop has local frame IDs 0..7499, mapped explicitly to original
+video frame IDs 11185..18684 by original_video_frames.npy; no target CSV is scored.
+
+Subsequent user-authorized public accuracy check
+
+After the original comparison, the user explicitly requested accuracy on the
+public five minutes. The frozen public-window probabilities were scored against
+the public target CSV with the same decoder and position-availability mask.
+No training, checkpoint selection or decoder tuning was performed in this step.
+Only the 7500 H/A/D-labelled public frames enter the accuracy denominator;
+unlabelled X frames elsewhere in the full match are excluded.
+
+Decoded A: 6250/7500 correct = 83.333333%.
+Decoded B: 6325/7500 correct = 84.333333%.
+B gains 75 correctly labelled frames, or 1.000000 percentage point.
+Raw TCN argmax, before decoding: A 81.84%, B 88.16%.
+Decoded spellF1: A .445714, B .657143.
+Decoded macroF1: A .810235, B .786656.
+Decoded dead-ball recall: A .706603, B .448604.
+
+Report: runs/speed-ablation-public-accuracy-20261111-complete/results.json.
+Predictions: A_submission.csv and B_submission.csv in that same directory.
+Reproduce from the repository root, choosing a fresh output directory:
+  $env:PYTHONPATH = (Get-Location).Path
+  python runs/score-speed-public-20261111.py --out runs/speed-ablation-public-accuracy-repro
+
+The earlier pipeline-only and external-comparison reports remain unchanged;
+the public accuracy report is a separate, later evaluation.

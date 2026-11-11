@@ -1,0 +1,138 @@
+BARCA–ATHLETIC P2: A/B COMPARISON AND P1 INPUT AUDIT — 2026-11-11
+Paste this file into the next coding session. All values below come from local artifacts.
+
+1. Decision context
+A is the original TCN trained with recorded scalar ball speed. B is the same TCN trained with ball_speed_mps missing on every frame. B is stronger on speed-hidden raw frame predictions and decoded possession spells, but the current decoder creates a serious dead-ball weakness on the public sample. Keep frame accuracy, spellF1, macroF1 and dead-ball recall separate.
+This turn audited inputs and recomputed metrics from frozen predictions. It did not retrain, tune a decoder, remove/add model features, or access the external test match. Proposed next steps below have NOT been run.
+
+2. Exact experiment
+Train IDs: J03WMX, J03WN1, J03WOH, J03WOY; 567278 frames. Validation IDs: J03WPY (146211 frames), J03WQQ (142345 frames). J03WR9 remains untouched. Public accuracy covers only video frames 11185..18684 inclusive, 7500 frames. Its ground-truth counts are H=3454, A=2577, D=1469. The public predictions use the five-minute crop and an explicit original-frame mapping, rather than future full-match context.
+Both: seed 42, deterministic CPU, one thread; 19 values + 19 observed flags; width 32, kernel 3, dilations [1,2,4,8,16], dropout .1, 32387 parameters, 125-frame receptive field; 512-frame cores, batch 16; AdamW lr .001, weight decay .0001, gradient clip 1; no class weighting; no point/ball-stretch masking augmentation; max 60 epochs, patience 8.
+A selected epoch 17 after 25 epochs; B selected epoch 27 after 35. Selection rule is validation mean spellF1 then macroF1 on TCN argmax. Original A was selected with recorded-speed validation, while B was selected with masked-speed validation. Both selected checkpoints are finally compared with speed hidden on exactly the same external validation frames. Thus the selection rule is preserved, but selection input distributions differ as recorded. Validation is development evidence, not untouched test evidence.
+A config: configs/p2_idsse_v1.json. B config: configs/p2_idsse_no_ball_speed.json. Only experiment-setting change: p1.mask_ball_speed=true. P1 sets values[:,ball_speed_mps]=0 and observed[:,ball_speed_mps]=False. B normalization embeds this policy, so inference cannot re-enable speed. Mean/scale/count for speed are 0/1/0 in B; all other fitted statistics match A. Fit uses observed, in-period TRAINING frames only.
+A checkpoint: artifacts/p2-idsse-cd715a3/best.pt; SHA256 c3304e196f17373dd651c8122ca577b4caed299e90dccce54b7ed20accf1bf86.
+B checkpoint: artifacts/p2-idsse-no-ball-speed-20261111/best.pt; SHA256 315b04fae0f2d570105081c3973bba75f011dab5e744175048b029c95ed62a97.
+Both checkpoint settings, source/input provenance, train-only normalization and original selection metrics were checked; saved validation metrics reproduce exactly. A was reused. Historical elapsed training times were 288.16s for A and 416.82s for B; these are not controlled runtime benchmarks.
+P3 decoder is p3.stage:decode_stage. Fixed shared config: configs/p2_speed_comparison_decoder.json; temperature=4, min_poss_s=1, min_dead_s=1, mean_poss_s=14, mean_dead_s=10, turnover_frac=.5, restart_switch=.8, start_alive=.5, missing_weight=0, prob_floor=.0001, use_mbr=false, seed=42, fitted=[]. These are inherited priors, not parameters fitted in this experiment.
+
+3. All principal comparisons (percent; F1 is not frame accuracy)
+spellF1 means F1 averaged over temporal IoUs .3/.4/.5/.6/.7. macroF1 averages H/A/D class F1. Raw TCN is probability argmax, with no P3 smoothing. P3_decoded uses the fixed decoder above. Every row hides scalar speed. No X ground-truth frame is counted as a correct scored frame.
+Match    Model Stage        Correct/N       Accuracy spellF1 macroF1 D-recall D-precision D-F1 H-F1 A-F1
+J03WPY   A     raw_TCN      128649/146211   87.989   24.324   85.944   97.157   89.115   92.962   87.712   77.157
+J03WPY   A     P3_decoded   129225/146211   88.383   50.706   86.363   97.069   89.935   93.366   88.181   77.541
+J03WPY   B     raw_TCN      132348/146211   90.518   33.834   88.822   95.043   95.745   95.392   89.407   81.668
+J03WPY   B     P3_decoded   132073/146211   90.330   50.957   88.627   95.038   95.828   95.431   88.984   81.466
+J03WQQ   A     raw_TCN      121414/142345   85.296   27.200   84.644   88.411   88.983   88.696   80.042   85.195
+J03WQQ   A     P3_decoded   122093/142345   85.773   51.101   85.083   88.735   89.761   89.245   80.207   85.799
+J03WQQ   B     raw_TCN      124907/142345   87.749   34.227   87.295   86.962   96.591   91.524   82.633   87.728
+J03WQQ   B     P3_decoded   125220/142345   87.969   57.765   87.487   87.192   96.881   91.781   82.719   87.962
+BAR-ATH  A     raw_TCN        6138/7500     81.840   18.039   79.963   76.310   63.333   69.219   85.180   85.491
+BAR-ATH  A     P3_decoded     6250/7500     83.333   44.571   81.023   70.660   68.425   69.524   86.686   86.860
+BAR-ATH  B     raw_TCN        6612/7500     88.160   25.652   86.979   73.996   92.119   82.069   89.626   89.243
+BAR-ATH  B     P3_decoded     6325/7500     84.333   65.714   78.666   44.860   87.633   59.343   91.104   85.551
+
+External aggregation: pooled accuracy weights every frame equally; other headline means weight the two matches equally. Both versions of accuracy are shown to avoid mixing them.
+Model Stage        Pooled-accuracy Match-mean-accuracy Mean-spellF1 Mean-macroF1 Mean-D-recall
+A     raw_TCN               86.660          86.642          25.762          85.294          92.784
+A     P3_decoded            87.095          87.078          50.904          85.723          92.902
+B     raw_TCN               89.153          89.134          34.031          88.059          91.002
+B     P3_decoded            89.166          89.150          54.361          88.057          91.115
+
+Decoded external B minus A: +2.071 percentage points pooled frame accuracy (+5975 frames), +3.458 points mean spellF1, +2.334 points macroF1, -1.787 points dead-ball recall. Most spell improvement is on J03WQQ; J03WPY improves only .251 points.
+Public raw B minus A: +6.32 percentage points accuracy (+474 frames). Public decoded B minus A: +1.00 point accuracy (+75 frames), +21.143 points spellF1, -2.358 points macroF1 and -25.800 points dead-ball recall. A higher overall correct-frame percentage does not mean every class improved.
+
+4. Decoder diagnosis on the public five minutes
+A: decoder fixes 283 wrong raw frames but breaks 171 correct raw frames.
+  ball_position_present: 6615 frames; raw accuracy=81.436%, decoded=83.069%; dead-ball true positives raw=648/975, decoded=672/975.
+  ball_position_missing: 885 frames; raw accuracy=84.859%, decoded=85.311%; dead-ball true positives raw=473/494, decoded=366/494.
+B: decoder fixes 186 wrong raw frames but breaks 473 correct raw frames.
+  ball_position_present: 6615 frames; raw accuracy=87.937%, decoded=90.038%; dead-ball true positives raw=661/975, decoded=659/975.
+  ball_position_missing: 885 frames; raw accuracy=89.831%, decoded=41.695%; dead-ball true positives raw=426/494, decoded=0/494.
+Code evidence: p3/decoder.py:_log_emission sets the log-probability weight to cfg.missing_weight where ball position is absent. With missing_weight=0, all neural H/A/D evidence is discarded on those frames, even though P2 still has player-only features. This is loss of information AFTER P1. B raw correctly identifies 426/494 missing-position dead frames; decoded B identifies 0/494. Net B accuracy falls by 287 frames after decoding. This localizes the problem, but a controlled decoder ablation is still needed to separate effects of missing_weight, duration priors and temperature. The decoder also raises B spellF1 from 25.652% to 65.714%; it is a metric tradeoff, not uniformly harmful.
+
+5. Raw input audit: what exists and what P1 uses
+Audited files: C:/Users/fcb10/Downloads/Telegram Desktop/BAR-ATH_tactical_atd.xml and .txt. Exactly 199319 raw records; frame_id 1..199319 maps to video frame 0..199318. Every row has 46 player slots (24 Barcelona, 22 Athletic) plus one ball slot, each x,y,speed. XML channel references match P1 player order exactly. Team 1 is Barcelona (H), team 2 is Athletic (A). The 46 slots are temporary tracklets, not 46 people or stable player identities.
+No raw z/height, confidence, acceleration, true player identity or possession label exists in this tracking row format. XML marks 44 player slots Unknown and 2 Goalkeeper (slot IDs 24 home and 46 away). P1 includes goalkeeper positions/speeds when present, but does not use the role marker. Static XML position_x/position_y values are zero/default formation placeholders, not frame-by-frame measurements. P1 currently uses all finite player x/y and scalar-speed observations, and all finite ball x/y, to build 19 permutation-invariant summaries. It does not pass all 142 raw scalar fields to the network.
+Raw x/y are normalized; P1 multiplies by games.py pitch 105.3 x 68m. XML says 105 x 68; the repository deliberately documents the corrected 105.3m length. IDSSE is already in centred pitch metres, and its speed S is divided by 3.6. Translation of the origin does not change these distance/width/length features; no rotation-dependent direction features are currently used.
+Reconstructing every Barca feature with the vectorized shared definitions produced exactly the cached public values (max absolute error=0) and flags. No nonfinite feature values, nonzero missing placeholders, negative observed player speeds, or partial x-only/y-only player positions were found. All 6615 public ball positions were preserved even when their speed was NaN.
+
+Source availability, distinct from P1 speed availability:
+Scope         Frames Ball-x/y present Raw-finite-speed P1-speed-observed Speed-without-x/y
+all_frames    199319           113488            20971              9909             11062
+in_period     158857            94214            13953              7377              6576
+public_5min     7500             6615                0                 0                 0
+Important: recorded speed is absent throughout the public five minutes, NOT throughout the full Barca file. Raw scalar speed is finite on 20971 full-file frames. Existing compute_frame/compute_frames only mark speed observed when ball x/y are also finite, so A exposes 9909 of them. The other 11062 are gated out (6576 during in-period frames). This is an existing policy choice to document/test separately: a finite scalar need not be trustworthy if position is unavailable. It does not affect the public five-minute A/B result, and B intentionally masks all speed regardless.
+Ball position availability is 88.2% in the public window, but only 59.307% in declared match periods. The public window has 6 missing-ball stretches; median 5.6 seconds, longest 14.64 seconds. Full-period gaps can be much longer. Thus the public window is unusually well observed compared with the rest of the match.
+
+6. Feature inventory and measured coverage/distribution shift
+All 19 original features are observed on 100% of IDSSE TRAINING frames before B masks speed. B has 18 ordinary feature channels plus one disabled channel, but retains the same 38 network input dimensions. Original A observation flags are constant in training; B changes only the speed flag. Neither run used the available observation-hiding augmentation.
+Feature                       Train observed% Public observed% Train mean Public mean Public observed values >3 train SD (%)
+ball_speed_mps                          100.00             0.00      7.770     missing        n/a
+home_nearest_ball_m                     100.00            88.20      7.368       4.112      0.000
+away_nearest_ball_m                     100.00            88.20      6.958       7.260      2.298
+home_second_nearest_ball_m              100.00            88.20     13.299      10.524      0.000
+away_second_nearest_ball_m              100.00            88.20     13.303      12.113      0.831
+home_players_within_3m                  100.00            88.20      0.364       0.484      0.181
+away_players_within_3m                  100.00            88.20      0.374       0.340      0.317
+home_players_within_5m                  100.00            88.20      0.642       0.751      1.179
+away_players_within_5m                  100.00            88.20      0.655       0.580      1.602
+ball_to_home_centroid_m                 100.00            88.20     23.723      18.913      0.000
+ball_to_away_centroid_m                 100.00            88.20     23.535      21.865      0.000
+home_width_m                            100.00           100.00     37.705      45.596      0.000
+away_width_m                            100.00           100.00     38.452      40.765      0.000
+home_length_m                           100.00           100.00     51.915      45.661      0.000
+away_length_m                           100.00           100.00     52.742      54.637      8.267
+home_mean_speed_mps                     100.00           100.00      1.819       2.156      0.373
+away_mean_speed_mps                     100.00           100.00      1.768       2.224      0.947
+home_players_observed                   100.00           100.00     11.000      10.745      0.000
+away_players_observed                   100.00           100.00     10.769      10.821      1.840
+The ten position-dependent proximity/count/centroid features disappear together on the 885 missing-position public frames. Player width/length/mean-speed/count features remain observed throughout the public window. Team-mean-speed flags do NOT mean every player has speed: 4770/80587 observed home positions (5.919%) and 5226/81154 away positions (6.440%) lack individual speed, and means average only available speeds. The model has observed-player counts, but not a separate number/fraction of speed observations.
+Goalkeeper slot 24: public position available on 7349 frames, speed on 3746; 3603 position observations lack speed. Much of the missing player-speed data is concentrated in goalkeepers. This can change which players contribute to team means even though the team mean's observed flag stays true.
+Goalkeeper slot 46: public position available on 6483 frames, speed on 2162; 4321 position observations lack speed. Much of the missing player-speed data is concentrated in goalkeepers. This can change which players contribute to team means even though the team mean's observed flag stays true.
+Track quality: 238 public frames have >11 home tracklets and 222 have >11 away tracklets, 460 frames total (6.133%). Counts range home 8..12, away 9..12 in the public sample; maxima in full declared periods are 19 home / 15 away. These may include duplicates, sidelines or tracking errors; they are not proof of extra real players. P1 includes every finite tracklet in counts, centroids, spans and proximity summaries. Only one public same-team pair lies within .1m; blindly merging all nearby players would therefore be unsafe and would miss many possible track issues.
+The away_length_m public feature has 8.267% of observations beyond 3 training standard deviations. Some team-width/speed averages shift too. These can reflect actual match play as well as tracker differences; neither distribution shift nor feature correlation alone proves a feature should be removed.
+There are 106 public frames with ball coordinates outside the nominal pitch. This can be genuine ball-out motion or tracking error; automatic clipping would remove possible dead-ball evidence. P1 uses these coordinates in distances but does not provide explicit ball x/y or pitch-boundary distance to the TCN.
+
+7. Speed-unit inconsistency: do NOT blindly divide Barca speeds by 3.6
+XML labels scalar speed as speed_kph / kph, while repository DATA.md says m/s and the adapter passes it through unchanged. Empirical check from player positions strongly supports m/s-like values:
+0.4-second central same-slot displacement check: 2579329 valid in-period comparisons; median derived_mps/recorded=0.999639; correlation=0.964159; median absolute error treating recorded values as m/s=0.114037m/s, versus dividing them by 3.6=1.125224m/s.
+Other 0.08s, .96s and 2s windows show the same order of magnitude. This is a motion-based sanity check, not provider certification: short gaps, smoothing and track identity changes matter. The XML unit label appears inconsistent with numerical values. Document the mismatch and seek provider confirmation; do not silently apply an extra conversion. The check above concerns player speed, not certification of the intermittent ball-speed measurements.
+
+8. Are we missing data or adding too much?
+No evidence of an accidentally bloated feature tensor: 19 summaries plus flags is compact, and the 46 raw tracklet IDs are correctly not encoded as people. We have not run group-removal ablations, so do not claim 19 is optimal or that correlated features hurt.
+Missing from the raw source: many ball positions, all public scalar ball speeds, some individual player speeds, reliable player identity, ball height/confidence. Missing by feature design: absolute ball location, pitch-boundary distances, velocity direction/closing motion, time since last valid ball observation, player-speed coverage counts, goalkeeper-role distinctions and explicit track-quality summaries. Some can be derived consistently; they are proposals, not already-tested improvements. Goalkeeper roles are available for two Barca slots but require a compatible IDSSE role mapping before any shared feature is added.
+Available but intentionally excluded: Smart Tagging, homography and video are separate assets, not missing fields in the ATD parser. Homography may provide a quality signal; Smart Tagging is label-adjacent and not shared with IDSSE, so adding it is a new experiment requiring leakage/provenance review. Never add IDSSE BallPossession/BallStatus as features: they generate targets.
+Potentially excessive observations, rather than excessive feature count: duplicate/extra tracklets and unreliable speed readings can distort the existing summaries. Do not cap counts at 11, drop distant players, clip the ball to the pitch or infer stable identities without a tested rule shared between providers.
+
+9. Suggested next coding tasks, in priority order — NOT executed
+A. Preserve the existing A/B artifacts. Test P3 evidence weighting during missing-ball stretches: P2 can still predict from players. Use identical frozen probabilities for a decoder-only comparison; fit/select on external validation with a predeclared missing-position stress protocol. Measure frame accuracy, spellF1, macroF1 and dead recall together. Do not choose parameters using the public-five-minute labels.
+B. Make one new training version C from B using the existing ball-stretch observation masking, with unchanged architecture/splits/seeds/budget. Match the physical missingness pattern across all ball-position-dependent features, keep player-only features, fit normalization on training only, and compare on identical externally masked validation inputs. The existing stretch range is 25..250 frames but its probability was zero in both A/B; the public gap maximum is 366 frames, so a short mask policy alone may underrepresent real gaps. Declare any new range before scoring.
+C. Add parser/provider contract tests for XML channel order, frame counts, team mapping and explicit documented units. Do not change Barca speed scale based only on the kph tag; motion checks disagree with it.
+D. Audit/recompute tracker quality before adding many channels: count valid speed observations separately, inspect extra tracklets, then ablate one feature group at a time. Candidate derived features include time-since-last-ball-observation and pitch-boundary distance, but neither fills an actually missing measurement. Implement the same numerical definition for IDSSE and Barca and never use labels to generate features.
+E. Expand seeds/external matches if available. With one seed, two validation matches and one already-inspected public segment, no broad robustness or statistical-significance claim is justified.
+
+10. Files, provenance and reproduction
+Implementation files and full training/public-scoring commands are listed in docs/P2_SPEED_ABLATION.txt. Existing changes remain uncommitted. This audit has not altered those model/feature definitions. The implementation passed 71 unittest checks previously; this audit additionally asserted raw alignment, exact public reconstruction, missing-value contracts and exact re-scoring of saved decoded metrics.
+Complete raw/decoded per-match official metrics, per-class precision/recall/F1, confusion matrices, transitions, spell counts, paired correctness and missing-ball breakdown: runs/model-comparison-handoff-20261111/comparison.json. Compact table: comparison.csv in the same directory.
+Full input audit (all 19 feature distributions/coverage, full-file raw completeness, unit checks and input hashes): runs/p1-barca-input-audit-20261111/audit.json. Additional gap and period checks: extra_checks.json. Static-role and goalkeeper speed availability: metadata_roles.json. Reconstructed full-match P1 features: barca_features_A.npz (unlabelled; no full-match accuracy claim).
+Original external comparison: runs/speed-ablation-20261111/results.json. Public frozen probabilities: runs/speed-ablation-public-20261111/{A,B}_probabilities.npz. Public scored output: runs/speed-ablation-public-accuracy-20261111-complete/results.json.
+Audit scripts (run from repository root with PYTHONPATH set to the root):
+  $env:PYTHONPATH = (Get-Location).Path
+  python runs/audit-p1-barca-inputs-20261111.py --out runs/p1-barca-input-audit-repro
+  python runs/build-ab-comparison-20261111.py
+The comparison script has a fixed new-output directory; choose a new directory in that script before repeating it, rather than overwriting evidence. No network, training data download, checkpoint download or external test access was required.
+
+Subsequent user-requested decoder rerun (missing_weight=0.5, temperature=4)
+
+Both TCNs were rerun on the same public crop. Their raw probability arrays
+exactly reproduce the earlier run. Only missing_weight changed from 0 to .5.
+A: 6231/7500 correct = 83.08% (previously 83.33%).
+B: 6759/7500 correct = 90.12% (previously 84.33%).
+B gains 434 correct frames, +5.786667 accuracy percentage points.
+B spellF1 changes 65.714286% -> 63.448276%; macroF1 78.665639% -> 88.587774%;
+dead-ball recall 44.860449% -> 74.404357%.
+This is a user-specified public-sample diagnostic, not external validation
+of the new decoder setting. Baseline configs/artifacts remain preserved.
+Config: runs/public-decoder-weight-05-20261111.json.
+Report: runs/public-decoder-weight-05-results-20261111/results.json.
+Before/after and missing-position checks: before_after.json in that directory.

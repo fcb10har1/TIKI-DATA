@@ -7,7 +7,7 @@ import numpy as np
 
 from tiki_data.contracts import FeatureBatch, MatchSpec, require
 
-from .features import FEATURE_NAMES, compute_frame
+from .features import FEATURE_NAMES, apply_feature_policy, compute_frame
 
 
 def _tag(element):
@@ -41,7 +41,7 @@ def parse_observation(text):
     return x, y, speed if np.isfinite(speed) else None
 
 
-def build_metrica_features(match, atd_meta, atd_raw, pitch):
+def build_metrica_features(match, atd_meta, atd_raw, pitch, mask_ball_speed=False):
     """Read one complete ATD timeline and return a P2-compatible FeatureBatch."""
     require(isinstance(match, MatchSpec), "match must be a MatchSpec")
     require(match.fps == 25, "P1 V1 and P2 V1 require 25 Hz")
@@ -100,4 +100,4 @@ def build_metrica_features(match, atd_meta, atd_raw, pitch):
     require(count == match.n_frames, "ATD row count disagrees with the match timeline")
     frames = np.arange(match.n_frames, dtype=np.int64)
     batch = FeatureBatch(match, frames, values, observed, FEATURE_NAMES, match.period_ids())
-    return batch.validate(match)
+    return apply_feature_policy(batch, mask_ball_speed)

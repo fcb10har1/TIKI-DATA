@@ -10,6 +10,7 @@ import torch
 
 from tiki_data.artifacts import read_batch, read_json, write_json
 from tiki_data.contracts import FeatureBatch, MatchSpec
+from tiki_data.p1.features import apply_feature_policy
 from tiki_data.p2.data import (Windows, encode, fit_normalization, hide_observations,
                                idsse_targets, validate_schema)
 from tiki_data.p2.inference import predict, predict_batch
@@ -67,6 +68,53 @@ class P2Tests(unittest.TestCase):
                 self.assertTrue(torch.all(x[:, :3] == 0))
             seen.extend(range(start, stop))
         self.assertEqual(seen, np.flatnonzero(batch.periods > 0).tolist())
+
+    def test_entire_speed_channel_missing_has_neutral_finite_normalization(self):
+        batch = self.batch()
+        masked = apply_feature_policy(batch, True)
+        norm = fit_normalization([masked], allow_unobserved=("ball_speed_mps",))
+        self.assertEqual((norm["mean"][0], norm["scale"][0], norm["observed_count"][0]), (0., 1., 0))
+        original = fit_normalization([batch])
+        for field in ("mean", "scale", "observed_count"):
+            self.assertEqual(norm[field][1:], original[field][1:])
+        for fitted in (norm, original):
+            encoded = encode(masked.values, masked.observed, fitted)
+            self.assertTrue(np.isfinite(encoded).all())
+            self.assertTrue((encoded[[0, 2]] == 0).all())
+        empty = FeatureBatch(batch.match, batch.frames, np.zeros_like(batch.values),
+                             np.zeros_like(batch.observed), batch.feature_names, batch.periods)
+        with self.assertRaisesRegex(ValueError, "observed training"):
+            fit_normalization([empty], allow_unobserved=("ball_speed_mps",))
+
+    def test_masked_training_embeds_inference_policy_and_never_opens_test(self):
+        prepare(self.root / "inputs")
+        path = self.root / "inputs/train.json"
+        config = read_json(path)
+        config["p1"] = {"mask_ball_speed": True}
+        config["features"]["p2_synthetic_test"] = "unavailable_test.npz"
+        write_json(path, config)
+        report = train(path, self.root / "masked_training")
+        self.assertEqual(report["status"], "complete")
+        self.assertFalse(report["test_accessed"])
+        norm = read_json(self.root / "masked_training/normalization.json")
+        self.assertTrue(norm["mask_ball_speed"])
+        j = norm["feature_names"].index("ball_speed_mps")
+        self.assertEqual(norm["observed_count"][j], 0)
+        self.assertEqual(norm["train_match_ids"], ["p2_synthetic_train"])
+        manifest = read_json(self.root / "inputs/manifest.json")
+        spec = MatchSpec.from_dict(manifest["matches"][1]["match"])
+        batch = read_batch(self.root / "inputs/p2_synthetic_validation_features.npz", spec, "features")
+        inputs = {"checkpoint": self.root / "masked_training/best.pt"}
+        settings = {"allow_synthetic": True}
+        original = predict(batch, inputs, settings)
+        hidden = predict(apply_feature_policy(batch, True), inputs, settings)
+        changed = batch.values.copy()
+        changed[batch.observed[:, j], j] = 9999
+        altered = FeatureBatch(spec, batch.frames, changed, batch.observed, batch.feature_names, batch.periods)
+        explicit_false = predict(altered, inputs, dict(settings, mask_ball_speed=False))
+        np.testing.assert_array_equal(original.probabilities, hidden.probabilities)
+        np.testing.assert_array_equal(original.probabilities, explicit_false.probabilities)
+        np.testing.assert_array_equal(original.frames, batch.frames)
 
     def test_chunk_reconstruction_and_boundary_independence(self):
         batch = self.batch()

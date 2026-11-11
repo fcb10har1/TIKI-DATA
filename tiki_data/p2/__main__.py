@@ -28,6 +28,7 @@ def main():
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--device", default="cpu")
     p.add_argument("--allow-synthetic", action="store_true")
+    p.add_argument("--mask-ball-speed", action="store_true")
     args = parser.parse_args()
     if args.command == "prepare-smoke":
         result = prepare(args.out)
@@ -37,7 +38,8 @@ def main():
     else:
         match = MatchSpec.from_dict(read_json(args.match))
         features = read_batch(args.features, match, "features")
-        settings = {"seed": args.seed, "device": args.device, "allow_synthetic": args.allow_synthetic}
+        settings = {"seed": args.seed, "device": args.device, "allow_synthetic": args.allow_synthetic,
+                    "mask_ball_speed": args.mask_ball_speed}
         probabilities = predict(features, {"checkpoint": Path(args.checkpoint).resolve()}, settings)
         _, checkpoint = load_checkpoint(args.checkpoint)
         out = Path(args.out).resolve()

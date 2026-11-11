@@ -6,7 +6,7 @@ ball status and tactical tags are deliberately excluded from the feature path.
 
 import numpy as np
 
-from tiki_data.contracts import require
+from tiki_data.contracts import FeatureBatch, require
 
 
 FEATURES = (
@@ -53,6 +53,25 @@ FEATURES = (
 FEATURE_NAMES = tuple(item[0] for item in FEATURES)
 BALL_DEPENDENT = FEATURE_NAMES[:11]
 INDEX = {name: i for i, name in enumerate(FEATURE_NAMES)}
+
+
+def apply_feature_policy(batch, mask_ball_speed=False):
+    """Apply the same scalar-speed policy to either provider or cached P1 batches.
+
+    Preserve the timeline and all geometry/player channels. Never mutate a cached
+    batch: A and B can safely share the original artifact. False is baseline A.
+    """
+    require(isinstance(mask_ball_speed, bool), "mask_ball_speed must be boolean")
+    batch.validate(batch.match)
+    if not mask_ball_speed:
+        return batch
+    require("ball_speed_mps" in batch.feature_names, "missing ball_speed_mps feature")
+    column = batch.feature_names.index("ball_speed_mps")
+    values, observed = batch.values.copy(), batch.observed.copy()
+    values[:, column] = 0
+    observed[:, column] = False
+    return FeatureBatch(batch.match, batch.frames.copy(), values, observed,
+                        batch.feature_names, batch.periods.copy()).validate(batch.match)
 
 
 def feature_schema():

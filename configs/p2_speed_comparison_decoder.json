@@ -1,0 +1,16 @@
+{
+  "fitted": [],
+  "mean_dead_s": 10.0,
+  "mean_poss_s": 14.0,
+  "min_dead_s": 1.0,
+  "min_poss_s": 1.0,
+  "missing_weight": 0.0,
+  "n_candidates": 24,
+  "n_samples": 64,
+  "prob_floor": 0.0001,
+  "restart_switch": 0.8,
+  "start_alive": 0.5,
+  "temperature": 4.0,
+  "turnover_frac": 0.5,
+  "use_mbr": false
+}

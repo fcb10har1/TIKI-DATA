@@ -1,0 +1,60 @@
+{
+  "augmentation": {
+    "ball_stretch_frames": [
+      25,
+      250
+    ],
+    "ball_stretch_probability": 0.0,
+    "point_probability": 0.0
+  },
+  "evaluation_manifest": "../data/external/idsse_processed/manifest.json",
+  "feature_schema": "../runs/cd-features/feature_schema.json",
+  "features": {
+    "J03WMX": "../runs/cd-features/J03WMX.npz",
+    "J03WN1": "../runs/cd-features/J03WN1.npz",
+    "J03WOH": "../runs/cd-features/J03WOH.npz",
+    "J03WOY": "../runs/cd-features/J03WOY.npz",
+    "J03WPY": "../runs/cd-features/J03WPY.npz",
+    "J03WQQ": "../runs/cd-features/J03WQQ.npz",
+    "J03WR9": "../runs/cd-features/J03WR9.npz"
+  },
+  "fps": 25,
+  "model": {
+    "dilations": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "dropout": 0.1,
+    "kernel": 3,
+    "width": 32
+  },
+  "schema_version": 1,
+  "seed": 42,
+  "training": {
+    "batch_size": 16,
+    "class_weights": "none",
+    "core_frames": 512,
+    "device": "cpu",
+    "epochs": 60,
+    "gradient_clip": 1.0,
+    "learning_rate": 0.001,
+    "patience": 8,
+    "threads": 1,
+    "weight_decay": 0.0001
+  },
+  "p1": {
+    "mask_ball_speed": true,
+    "kalman": {
+      "measurement_std_m": 0.5,
+      "acceleration_std_mps2": 20.0,
+      "initial_velocity_std_mps": 10.0,
+      "max_velocity_std_mps": 10.0,
+      "max_prediction_s": 0.5,
+      "innovation_gate_squared": 25.0,
+      "min_observations": 3
+    }
+  }
+}

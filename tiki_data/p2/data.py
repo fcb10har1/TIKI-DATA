@@ -32,7 +32,7 @@ def validate_schema(schema, names):
     return schema
 
 
-def fit_normalization(batches):
+def fit_normalization(batches, allow_unobserved=()):
     """Population moments, observed training frames inside periods only, float64."""
     names = batches[0].feature_names
     count = np.zeros(len(names), dtype=np.int64)
@@ -49,8 +49,11 @@ def fit_normalization(batches):
             m2[j] += ((x - x.mean()) ** 2).sum() + delta ** 2 * count[j] * len(x) / total
             mean[j] += delta * len(x) / total
             count[j] = total
-    require((count > 0).all(), "every feature needs an observed training value")
-    scale = np.sqrt(m2 / count)
+    require(set(allow_unobserved) <= set(names), "unknown allowed unobserved feature")
+    require(all(n > 0 or name in allow_unobserved for name, n in zip(names, count)),
+            "every feature needs an observed training value unless explicitly allowed")
+    # An explicitly disabled channel has neutral moments; no division by zero.
+    scale = np.sqrt(np.divide(m2, count, out=np.ones_like(m2), where=count > 0))
     scale[scale < 1e-8] = 1.0
     return {"feature_names": list(names), "mean": mean.tolist(), "scale": scale.tolist(),
             "observed_count": count.tolist(), "fit_scope": "train_matches_in_period_observed_only"}
@@ -75,7 +78,7 @@ def timeline_blocks(batch, include_outside=False):
             if include_outside or batch.periods[a] > 0]
 
 
-def hide_observations(values, observed, rng, augmentation, ball_indices):
+def hide_observations(values, observed, rng, augmentation, ball_indices, speed_index=None):
     """Mask all ball-derived channels together, including motion/distance summaries.
 
     No target-dependent decisions; normalization remains fixed on unaugmented train data.
@@ -88,6 +91,11 @@ def hide_observations(values, observed, rng, augmentation, ball_indices):
         length = int(rng.integers(low, high + 1))
         start = int(rng.integers(0, max(1, len(values) - min(length, len(values)) + 1)))
         observed[start:start + length, ball_indices] = False
+    probability = augmentation.get("speed_window_probability", 0)
+    if probability > 0:
+        require(speed_index is not None, "scalar-speed augmentation needs ball_speed_mps")
+        if rng.random() < probability:
+            observed[:, speed_index] = False
     values[~observed] = 0
     return values, observed
 
@@ -133,7 +141,9 @@ def make_window(batch, normalization, left, right, start, core, radius,
     if augmentation:
         # DataLoader uses num_workers=0; NumPy RNG is seeded and advances reproducibly.
         values, observed = hide_observations(values, observed, np.random.default_rng(
-            int(np.random.randint(0, 2**32 - 1, dtype=np.int64))), augmentation, ball_indices)
+            int(np.random.randint(0, 2**32 - 1, dtype=np.int64))), augmentation, ball_indices,
+            normalization["feature_names"].index("ball_speed_mps")
+            if "ball_speed_mps" in normalization["feature_names"] else None)
     x = np.zeros((2 * values.shape[1], core + 2 * radius), dtype=np.float32)
     offset = a - (start - radius)
     x[:, offset:offset+b-a] = encode(values, observed, normalization)

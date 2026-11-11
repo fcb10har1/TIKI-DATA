@@ -9,7 +9,7 @@ import numpy as np
 
 from tiki_data.artifacts import read_batch, read_json, write_batch
 from tiki_data.contracts import FeatureBatch, MatchSpec
-from tiki_data.p1.features import (BALL_DEPENDENT, FEATURE_NAMES, compute_frame,
+from tiki_data.p1.features import (BALL_DEPENDENT, FEATURE_NAMES, apply_feature_policy, compute_frame,
                                    compute_frames, feature_schema)
 from tiki_data.p1.idsse import convert_match
 from tiki_data.p1.metrica import build_metrica_features
@@ -78,6 +78,47 @@ class P1Tests(unittest.TestCase):
         loaded = read_batch(path, match, "features")
         np.testing.assert_array_equal(batch.values, loaded.values)
         np.testing.assert_array_equal(batch.observed, loaded.observed)
+        masked = build_metrica_features(match, metadata, raw, (100.0, 50.0), mask_ball_speed=True)
+        self.assert_speed_only_change(batch, masked)
+        self.assertTrue(masked.observed[0, home_nearest])
+        self.assertAlmostEqual(masked.values[0, home_nearest], 1.0)
+
+    def assert_speed_only_change(self, original, masked):
+        column = original.feature_names.index("ball_speed_mps")
+        other = [i for i in range(len(original.feature_names)) if i != column]
+        np.testing.assert_array_equal(original.frames, masked.frames)
+        np.testing.assert_array_equal(original.periods, masked.periods)
+        np.testing.assert_array_equal(original.values[:, other], masked.values[:, other])
+        np.testing.assert_array_equal(original.observed[:, other], masked.observed[:, other])
+        self.assertTrue((masked.values[:, column] == 0).all())
+        self.assertFalse(masked.observed[:, column].any())
+        self.assertEqual(masked.feature_names, original.feature_names)
+        self.assertEqual(masked.match, original.match)
+
+    def test_scalar_speed_policy_is_strict_nonmutating_and_idempotent(self):
+        match = MatchSpec("policy_fixture", 4, 25)
+        batch = FeatureBatch(match, np.arange(4), np.ones((4, 19), dtype=np.float32),
+                             np.ones((4, 19), dtype=bool), FEATURE_NAMES, match.period_ids())
+        self.assertIs(apply_feature_policy(batch), batch)
+        masked = apply_feature_policy(batch, True)
+        self.assert_speed_only_change(batch, masked)
+        self.assertTrue(batch.observed.all())
+        self.assertTrue((batch.values == 1).all())
+        np.testing.assert_array_equal(apply_feature_policy(masked, True).values, masked.values)
+        for invalid in ("false", 1, None):
+            with self.assertRaisesRegex(ValueError, "boolean"):
+                apply_feature_policy(batch, invalid)
+
+    def test_missing_scalar_speed_preserves_metrica_ball_position(self):
+        from tiki_data.p1.metrica import parse_observation
+        x, y, speed = parse_observation("0.51,0.50,NaN")
+        self.assertIsNone(speed)
+        values, observed = compute_frame(np.array([[50., 25.], [60., 25.]]),
+                                         np.array([[80., 25.], [90., 25.]]), [1, 2], [3, 4],
+                                         (x * 100, y * 50), speed)
+        self.assertFalse(observed[FEATURE_NAMES.index("ball_speed_mps")])
+        self.assertTrue(observed[FEATURE_NAMES.index("home_nearest_ball_m")])
+        self.assertAlmostEqual(values[FEATURE_NAMES.index("home_nearest_ball_m")], 1.)
 
     def test_schema_and_p2_tensor_contract(self):
         schema = feature_schema()
@@ -161,6 +202,15 @@ class P1Tests(unittest.TestCase):
         self.assertEqual(batch.feature_names, FEATURE_NAMES)
         self.assertNotIn("BallPossession", batch.feature_names)
         self.assertNotIn("BallStatus", batch.feature_names)
+        masked_out = self.root / "masked"
+        masked_match = convert_match("TEST1", {"match_information": info, "events": events,
+                                              "positions": position}, masked_out, mask_ball_speed=True)
+        self.assertEqual(match, masked_match)
+        masked = read_batch(masked_out / "features.npz", match, "features")
+        self.assert_speed_only_change(batch, masked)
+        self.assertEqual((out / "labels.csv").read_bytes(), (masked_out / "labels.csv").read_bytes())
+        self.assertEqual(read_json(masked_out / "conversion.json")["feature_observed_fraction"]
+                         ["ball_speed_mps"], 0.)
 
 
 if __name__ == "__main__":

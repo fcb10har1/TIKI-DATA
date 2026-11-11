@@ -12,6 +12,7 @@ from tiki_data.artifacts import read_batch, read_json, read_predictions, resolve
 from tiki_data.benchmark import PUBLIC_GT, input_fingerprints, load_manifest, score_match
 from tiki_data.contracts import CLASS_ORDER, MatchSpec, PredictionBatch, require
 from tiki_data.provenance import environment, file_record, now, source_snapshot
+from tiki_data.p1.features import apply_feature_policy
 from .data import Windows, fit_normalization, validate_schema
 from .inference import load_checkpoint, predict_batch
 from .model import TCN, seed_all
@@ -20,9 +21,19 @@ from .model import TCN, seed_all
 def load_training_config(path):
     path = Path(path).resolve()
     config = read_json(path)
-    require(set(config) == {"schema_version", "evaluation_manifest", "features", "feature_schema",
+    require(set(config) - {"p1", "validation"} == {"schema_version", "evaluation_manifest", "features", "feature_schema",
                             "seed", "fps", "model", "training", "augmentation"}, "invalid P2 config fields")
     require(config["schema_version"] == 1, "unsupported P2 config version")
+    p1 = config.get("p1", {})
+    require(isinstance(p1, dict) and set(p1) <= {"mask_ball_speed", "kalman"}
+            and isinstance(p1.get("mask_ball_speed", False), bool), "invalid P1 feature settings")
+    if "kalman" in p1:
+        from tiki_data.p1.kalman import validate_settings
+        validate_settings(p1["kalman"])
+        require(p1.get("mask_ball_speed") is True, "Kalman variant keeps recorded speed hidden")
+    validation = config.get("validation", {})
+    require(isinstance(validation, dict) and set(validation) <= {"mask_ball_speed"}
+            and isinstance(validation.get("mask_ball_speed", False), bool), "invalid validation settings")
     require(isinstance(config["seed"], int) and 0 <= config["seed"] < 2**32, "invalid seed")
     require(config["fps"] == 25, "V1 requires shared 25 Hz features; resample in P1")
     config["evaluation_manifest"] = str(resolve_path(config["evaluation_manifest"], path.parent))
@@ -39,8 +50,11 @@ def load_training_config(path):
     require(t["class_weights"] in ("none", "balanced"), "class_weights must be none or balanced")
     require(set(config["model"]) == {"width", "kernel", "dilations", "dropout"}, "invalid model settings")
     aug = config["augmentation"]
-    require(set(aug) == {"point_probability", "ball_stretch_probability", "ball_stretch_frames"},
+    require(set(aug) - {"speed_window_probability"} == {"point_probability", "ball_stretch_probability", "ball_stretch_frames"},
             "invalid augmentation settings")
+    require(isinstance(aug.get("speed_window_probability", 0), (int, float))
+            and not isinstance(aug.get("speed_window_probability", 0), bool)
+            and 0 <= aug.get("speed_window_probability", 0) <= 1, "invalid speed_window_probability")
     require(all(0 <= aug[key] <= 1 for key in ("point_probability", "ball_stretch_probability")),
             "invalid masking probability")
     limits = aug["ball_stretch_frames"]
@@ -76,6 +90,9 @@ def load_data(config):
         feature_hashes.add(record["sha256"])
         records.append(record)
         batch = read_batch(feature_path, spec, "features")
+        batch = apply_feature_policy(batch, config.get("p1", {}).get("mask_ball_speed", False))
+        if entry["split"] == "validation":
+            batch = apply_feature_policy(batch, config.get("validation", {}).get("mask_ball_speed", False))
         names = names or batch.feature_names
         require(batch.feature_names == names, "feature order must match across train/validation")
         validate_schema(schema, names)
@@ -137,7 +154,12 @@ def train(config_path, out):
         t = config["training"]
         seed_all(config["seed"], t["threads"])
         model = TCN(data["train"][0][0].values.shape[1], **config["model"]).to(t["device"])
-        normalization = fit_normalization([batch for batch, _ in data["train"]])
+        mask_speed = config.get("p1", {}).get("mask_ball_speed", False)
+        normalization = fit_normalization([batch for batch, _ in data["train"]],
+                                          allow_unobserved=("ball_speed_mps",) if mask_speed else ())
+        normalization["mask_ball_speed"] = mask_speed
+        if "kalman" in config.get("p1", {}):
+            normalization["kalman_settings"] = config["p1"]["kalman"]
         normalization["train_match_ids"] = [batch.match.match_id for batch, _ in data["train"]]
         write_json(out / "normalization.json", normalization)
         windows = Windows(data["train"], normalization, t["core_frames"], model.radius,

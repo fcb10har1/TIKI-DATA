@@ -1,6 +1,7 @@
 """Streaming IDSSE XML conversion into P1 features and P2 training artifacts."""
 
 from collections import Counter
+import os
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
@@ -13,7 +14,7 @@ from tiki_data.benchmark import load_manifest
 from tiki_data.contracts import FeatureBatch, MatchSpec, PredictionBatch, require
 from tiki_data.p2.data import idsse_targets
 
-from .features import FEATURE_NAMES, compute_frames, feature_schema
+from .features import FEATURE_NAMES, apply_feature_policy, compute_frames, feature_schema
 
 
 PERIODS = ("firstHalf", "secondHalf")
@@ -190,7 +191,7 @@ def read_player_tracks(path, information, timeline):
     return positions[0], positions[1], speeds[0], speeds[1]
 
 
-def convert_match(match_id, files, out):
+def convert_match(match_id, files, out, mask_ball_speed=False):
     """Convert one complete IDSSE match into the shared P1/P2 artifacts."""
     information = read_match_information(files["match_information"])
     require(information["match_id"] == match_id, "IDSSE filename and match-information IDs disagree")
@@ -203,6 +204,7 @@ def convert_match(match_id, files, out):
         timeline["positions"], timeline["speeds"])
     batch = FeatureBatch(match, np.arange(match.n_frames, dtype=np.int64), values, observed,
                          FEATURE_NAMES, match.period_ids()).validate(match)
+    batch = apply_feature_policy(batch, mask_ball_speed)
     labels = idsse_targets(timeline["possession"], timeline["status"])
     target = PredictionBatch(match, np.arange(match.n_frames, dtype=np.int64), labels).validate(match)
 
@@ -223,11 +225,12 @@ def convert_match(match_id, files, out):
         "period_source_frames": timeline["raw_periods"],
         "coordinate_conversion": "none; IDSSE X/Y are already pitch-centred metres",
         "speed_conversion": "IDSSE S divided by 3.6 (km/h to m/s)",
+        "mask_ball_speed": mask_ball_speed,
         "target_mapping": {"BallStatus=0": "D", "BallStatus=1 and BallPossession=1": "H",
                            "BallStatus=1 and BallPossession=2": "A", "otherwise": "X"},
         "label_counts": {label: int(label_counts.get(label, 0)) for label in ("H", "A", "D", "X")},
         "feature_observed_fraction": {
-            name: float(observed[:, index].mean()) for index, name in enumerate(FEATURE_NAMES)},
+            name: float(batch.observed[:, index].mean()) for index, name in enumerate(FEATURE_NAMES)},
     }
     write_json(out / "conversion.json", conversion, exclusive=True)
     return match
@@ -266,7 +269,7 @@ Credit DFL and cite Bassek, Rein, Weber and Memmert (2025), *Scientific Data*
 """
 
 
-def build_dataset(raw_dir, out, template_config, config_out, resume=False):
+def build_dataset(raw_dir, out, template_config, config_out, resume=False, mask_ball_speed=False):
     """Convert all seven matches and emit a fixed whole-match P2 package."""
     matches = discover(raw_dir)
     require(len(matches) == 7, "IDSSE V1 expects exactly seven complete matches")
@@ -287,11 +290,13 @@ def build_dataset(raw_dir, out, template_config, config_out, resume=False):
             read_batch(match_out / "features.npz", match, "features")
             read_predictions(match_out / "labels.csv", match)
             require((match_out / "conversion.json").is_file(), "resumed match lacks conversion metadata")
+            require(read_json(match_out / "conversion.json").get("mask_ball_speed", False)
+                    == mask_ball_speed, "resumed match has a different scalar-speed policy")
             converted[match_id] = match
             print("Reusing validated IDSSE match {} ({})".format(match_id, split[match_id]), flush=True)
         else:
             print("Converting IDSSE match {} ({})".format(match_id, split[match_id]), flush=True)
-            converted[match_id] = convert_match(match_id, files, match_out)
+            converted[match_id] = convert_match(match_id, files, match_out, mask_ball_speed)
 
     write_json(out / "feature_schema.json", feature_schema(), exclusive=True)
     manifest = {
@@ -315,12 +320,14 @@ def build_dataset(raw_dir, out, template_config, config_out, resume=False):
     load_manifest(out / "manifest.json")
 
     template = read_json(template_config)
-    template["evaluation_manifest"] = "../data/external/idsse_processed/manifest.json"
-    template["feature_schema"] = "../data/external/idsse_processed/feature_schema.json"
+    base = Path(config_out).resolve().parent
+    template["evaluation_manifest"] = Path(os.path.relpath(out / "manifest.json", base)).as_posix()
+    template["feature_schema"] = Path(os.path.relpath(out / "feature_schema.json", base)).as_posix()
     template["features"] = {
-        match_id: "../data/external/idsse_processed/matches/{}/features.npz".format(match_id)
+        match_id: Path(os.path.relpath(out / "matches" / match_id / "features.npz", base)).as_posix()
         for match_id in ids
     }
+    template["p1"] = {"mask_ball_speed": mask_ball_speed}
     write_json(config_out, template, exclusive=True)
     return {"matches": len(ids), "splits": dict(Counter(split.values())),
             "output": str(out), "config": str(Path(config_out).resolve())}

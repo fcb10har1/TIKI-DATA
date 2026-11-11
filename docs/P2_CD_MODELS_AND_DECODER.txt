@@ -1,0 +1,215 @@
+C / D possession experiment -- 11 November 2026
+
+C: optional recorded speed
+Uses the original 19 P1 features. During training, independently for each window
+(including its receptive-field context), recorded ball_speed_mps is zero with
+observed=False with probability 0.5. Other features are unchanged. Inference uses
+recorded speed when P1 reports it observed, and the existing zero/False convention
+otherwise. The TCN learns how to use it; there is no label-driven speed gate.
+This differs from A (always observed in IDSSE training) and B (always hidden).
+Validation for C checkpoint selection hides recorded speed on every frame.
+
+D: B plus causal Kalman motion
+Recorded ball_speed_mps remains zero/False during training and inference. Three
+separate features are added: ball_kalman_speed_mps, ball_kalman_velocity_std_mps,
+ball_kalman_age_s, each with a separate validity flag. Raw ball-position geometry
+is preserved, not filled with predicted positions. Decoder ball_observed still
+means an original finite ball position, not a Kalman estimate.
+The constant-velocity filter uses only ball x/y in metres and elapsed time. It
+resets at period boundaries, rejects large innovations, warms up for at least
+three observations, and stops predicting velocity after 0.5 seconds without a
+position. It does not use recorded speed, possession labels, ball status, or
+future observations. Parameters are fixed in the D config, not fitted on Barca.
+D has 22 feature values + 22 flags. Hidden TCN layers are unchanged; its input
+projection consequently has slightly more parameters than A/B/C.
+
+Experimental protocol
+Train: J03WMX, J03WN1, J03WOH, J03WOY. Validation: J03WPY, J03WQQ.
+Test match J03WR9 is not read. Public five-minute labels are never used to fit
+normalization, TCN weights, Kalman parameters, or the new decoder weight search.
+Train-only normalization, seed 42, width 32, kernel 3, dilations 1/2/4/8/16,
+dropout 0.1, core 512, batch 16, AdamW lr 0.001, weight decay 0.0001, clip 1,
+60-epoch cap and patience 8. Select mean validation spellF1, then macroF1.
+A retains its existing checkpoint selected with speed observed; B/C/D select
+with speed hidden. Single-seed validation is not an independent final test.
+
+Primary comparison: recorded speed hidden for all four models on the same
+external validation matches and public frames. Fixed decoder temperature 4,
+missing_weight 0.5. Also report natural available-speed external validation.
+Decoder search: weights 0 / 0.25 / 0.5 / 0.75 / 1, all other settings fixed.
+To make missing_weight identifiable, simulate ball-position occlusion in
+external validation with 2-second and 10-second blocks independently hidden at
+probability 0.4, seed 20261111 plus deterministic match/profile offsets.
+Hide all original ball-dependent geometry and recompute D from the occluded
+positions, so its filter never sees the hidden data. Choose one shared weight
+by mean frame accuracy over B/C/D, both matches, and both gap profiles. Break
+ties by distance to 0.5 then the smaller weight. Save the choice before scoring
+new C/D public predictions. Natural validation positions are always available,
+so changing missing_weight there cannot establish the best value for gaps.
+Synthetic gaps are an approximation, not proof of optimal full-match settings.
+The public sample is repeatedly inspected development data, not a holdout.
+
+Commands executed (repository root, PowerShell; new output directories required)
+python -m tiki_data.p1.fetch_idsse_ball
+python -m tiki_data.p2.motion_experiment prepare --positions runs/cd-ball-inputs --out runs/cd-features
+python -m unittest discover -s tests -v
+python -m tiki_data.p2 train --config configs/p2_idsse_c_optional_speed.json --out artifacts/p2-idsse-c-optional-speed-20261111
+python -m tiki_data.p2 train --config configs/p2_idsse_d_kalman.json --out artifacts/p2-idsse-d-kalman-20261111
+python -m tiki_data.p2.motion_experiment evaluate --positions runs/cd-ball-inputs --public-inputs runs/speed-ablation-public-20261111 --decoder configs/p2_speed_comparison_decoder.json --out runs/abcd-comparison-20261111
+
+The first download was executed from the identical precursor
+runs/fetch-idsse-ball-cd.py, now retained as the import-safe module command above.
+It retrieves original public IDSSE ball records from figshare article 28196177,
+checks both periods against the existing conversion frame maps, and extracts
+only N, X and Y. Source byte-range hashes are in runs/cd-ball-inputs/*.json.
+No test-match tracking or labels are fetched. Reuse these verified cached
+positions when rerunning. The existing A/B checkpoints and public P1 crop are
+inputs; see docs/P2_SPEED_ABLATION.txt for their reproduction commands.
+Output directories are exclusive to preserve provenance: use a fresh workspace
+or preserve/move previous experiment outputs before executing identical paths.
+
+Changed files for C/D
+configs/p2_idsse_c_optional_speed.json
+configs/p2_idsse_d_kalman.json
+tiki_data/p1/kalman.py
+tiki_data/p1/fetch_idsse_ball.py
+tiki_data/p2/data.py -- optional whole-window speed dropout
+tiki_data/p2/train.py -- config validation, masked validation, Kalman metadata
+tiki_data/p2/motion_experiment.py -- preparation, audits, evaluation and search
+tests/test_motion_variants.py
+docs/P2_CD_MODELS_AND_DECODER.txt
+
+Pipeline integration
+C uses tiki_data.p1.adapter:build with mask_ball_speed=false (or omitted), then
+tiki_data.p2.inference:predict with its C checkpoint and the original 19 names.
+D uses tiki_data.p1.kalman:build as predictor.features.callable. Supply the same
+atd_meta and atd_raw inputs, pitch [105.3, 68], and settings.kalman copied exactly
+from configs/p2_idsse_d_kalman.json p1.kalman. Use D's checkpoint and all 22
+normalization.feature_names for predictor.model.expected_features. D cannot be
+fed the old 19-feature artifact. Decoder ball_observed must still refer to raw
+finite x/y, never the Kalman validity flags.
+The evaluator accepts --config-a/b/c/d and --checkpoint-a/b/c/d overrides, so
+new training output directories can be compared without editing Python source.
+
+Checks completed
+78 repository unittest tests passed. The seven new motion tests also passed
+after the final evaluator-only metadata/CLI update. Training code did not change
+after either C or D started. The only source update after training corrected
+public-label hash/scoring wording, added evaluator path overrides and selected
+decoder export, and skipped unused A-only weight-search candidates.
+C: 55 epochs, selected epoch 47, checkpoint reload verification passed.
+D: 29 epochs, selected epoch 21, checkpoint reload verification passed.
+Every D train/validation artifact passed frame/period equality, preservation
+of the original non-speed features/flags, scalar speed zero/False, and finite
+value checks. Public feature checks preserve all 7,500 video-frame mappings.
+The last J03WQQ download required resumable 8 MiB chunks; the recovery script is
+runs/fetch-wqq-chunks.py and its source byte-range hash is in the same cache.
+
+
+
+RESULTS -- recorded scalar speed hidden for every model, temperature 4
+Public five minutes: video frames 11185..18684 inclusive, 7500 graded H/A/D frames.
+Outside-window X frames are excluded from accuracy, never counted as correct.
+Model | raw TCN accuracy % | decoded weight 0.5 % | correct / 7500 | spellF1 | macroF1 | dead recall %
+A | 81.8400 | 83.0800 | 6231 / 7500 | 0.468571 | 0.812288 | 78.3526
+B | 88.1600 | 90.1200 | 6759 / 7500 | 0.634483 | 0.885878 | 74.4044
+C | 85.8000 | 86.2800 | 6471 / 7500 | 0.502857 | 0.848967 | 75.9020
+D | 71.0400 | 72.3733 | 5428 / 7500 | 0.424242 | 0.558355 | 3.1995
+
+External validation, weight 0.5; same 288556 graded frames for all arms.
+Model | match | accuracy % | spellF1 | macroF1 | dead recall %
+A | J03WPY | 88.3825 | 0.507059 | 0.863628 | 97.0688
+A | J03WQQ | 85.7726 | 0.511013 | 0.850835 | 88.7348
+A | equal-match MEAN | 87.0776 | 0.509036 | 0.857231 | 92.9018
+A | pooled correct-frame %: 87.0951
+B | J03WPY | 90.3304 | 0.509573 | 0.886271 | 95.0379
+B | J03WQQ | 87.9694 | 0.577650 | 0.874874 | 87.1916
+B | equal-match MEAN | 89.1499 | 0.543612 | 0.880573 | 91.1147
+B | pooled correct-frame %: 89.1657
+C | J03WPY | 92.0779 | 0.593419 | 0.906232 | 97.5166
+C | J03WQQ | 89.5641 | 0.602546 | 0.889592 | 91.6524
+C | equal-match MEAN | 90.8210 | 0.597983 | 0.897912 | 94.5845
+C | pooled correct-frame %: 90.8378
+D | J03WPY | 93.8794 | 0.599412 | 0.923668 | 99.1321
+D | J03WQQ | 92.0735 | 0.625181 | 0.914272 | 94.6356
+D | equal-match MEAN | 92.9764 | 0.612296 | 0.918970 | 96.8838
+D | pooled correct-frame %: 92.9885
+
+Available versus missing recorded speed, external pooled decoded accuracy %:
+Model | available channel supplied | channel hidden
+A | 89.7445 | 87.0951
+B | 89.1657 | 89.1657
+C | 91.8626 | 90.8378
+D | 92.9885 | 92.9885
+B and D ignore the supplied recorded channel by construction. C does use it.
+C improves external accuracy from 90.84% hidden to 91.86% available; this did
+not translate into beating B on the Barca five-minute sample.
+
+Decoder search: mean correct-frame % over both matches and both gap profiles.
+weight | B | C | D | joint B/C/D objective
+0.00 | 81.1684 | 82.4925 | 82.6837 | 82.1149
+0.25 | 85.6475 | 85.9554 | 75.9206 | 82.5079
+0.50 | 85.1619 | 85.5609 | 75.1186 | 81.9471
+0.75 | 85.1251 | 85.2719 | 74.2096 | 81.5355
+1.00 | 84.9060 | 85.2425 | 73.8496 | 81.3327
+Selected shared weight: 0.25, saved before public scoring. B and C each also
+prefer 0.25 individually on this external gap grid. D individually prefers 0.
+All remaining decoder settings are unchanged, including temperature 4.
+
+Public results with the external-selected weight 0.25:
+Model | accuracy % | correct / 7500 | spellF1 | macroF1 | dead recall %
+A | 83.0800 | 6231 / 7500 | 0.468571 | 0.812288 | 78.3526
+B | 90.1200 | 6759 / 7500 | 0.634483 | 0.885878 | 74.4044
+C | 86.9733 | 6523 / 7500 | 0.517647 | 0.855281 | 76.4466
+D | 72.3733 | 5428 / 7500 | 0.424242 | 0.558355 | 3.1995
+
+Interpretation
+Keep B as the current Barca candidate. Neither new model beat its 90.12% on
+the public five minutes. C and D improved clean external validation, so those
+gains alone cannot justify replacing B for this tracking provider.
+D failed especially on dead ball: recall was 3.20% on Barca, versus a mean
+96.88% on external validation. Post-evaluation diagnostics show a strong
+source difference: 97.72% of valid IDSSE training dead-ball speed estimates
+were below 0.25 m/s, versus 0.81% in the Barca sample. Median estimated speed
+on dead-ball frames was approximately 0 m/s in training and 2.74 m/s on Barca.
+This suggests that D learned the source-specific relationship between nearly
+stationary positions and dead ball; it is an explanation supported by feature
+distributions, not a causal proof. D also degraded strongly under artificial
+position gaps. No parameters or weights were refitted after this diagnosis.
+It does not show that every possible Kalman-based approach will fail.
+For the decoder, 0.25 is the better-supported candidate among the five tested
+weights: B gap-test accuracy rises from 85.16% (0.5) to 85.65% (0.25), while
+Barca five-minute accuracy stays 90.12%. This is not evidence of a measured
+full-90-minute gain or a global optimum. Only the public five minutes has
+Barca ground truth. More labelled, provider-matched full matches or reserved
+longer windows are needed to establish generalization. The existing decoder
+config is preserved; the separate selected_decoder.json has missing_weight
+listed as fitted on external validation.
+
+Checks and provenance
+All four checkpoints passed exact saved-validation reproduction, matching
+training-settings, input hashes, and train-only normalization audits.
+C normalization equals A; D first-19-channel normalization equals B exactly.
+All evaluated normalized tensors are finite and preserve frame IDs.
+Recorded speed and its model flag are zero in every primary comparison.
+A/B public probabilities reproduced earlier saved probabilities bit for bit.
+D preserves original ball geometry and uses only causal x/y-derived estimates.
+Model sizes: A/B/C 32387 parameters; D 32579 (+192).
+C: best epoch 47 of 55; D: best epoch 21 of 29. Cap/patience remain 60/8.
+Single seed 42; the test partition was never accessed.
+
+Artifacts
+runs/abcd-comparison-20261111/results.json -- complete handoff
+runs/abcd-comparison-20261111/external_matches.csv -- per-match decoded metrics
+runs/abcd-comparison-20261111/external_raw.csv -- per-match raw TCN metrics
+runs/abcd-comparison-20261111/public_results.csv -- public raw/decoded metrics
+runs/abcd-comparison-20261111/decoder_sweep.csv -- full gap grid
+runs/abcd-comparison-20261111/selected_decoder.json -- external-selected settings
+runs/abcd-comparison-20261111/kalman_diagnostics.json -- post-evaluation diagnosis
+runs/abcd-comparison-20261111/normalization_checks.json
+runs/abcd-comparison-20261111/optional_speed_checks.json
+runs/cd-features/checks.json -- P1 train/validation preservation audit
+artifacts/p2-idsse-c-optional-speed-20261111/best.pt
+artifacts/p2-idsse-d-kalman-20261111/best.pt
+C SHA256 9ab5ff23982a5adad6d32f9ecfbdedaca549721a116e0a2775e4258b2a9b1997
+D SHA256 bd2313dce228da2954246034e2abc951fbc95500c4f36daeff90446321909ca5
