@@ -55,6 +55,11 @@ getting to the actual question. See [CHALLENGE.md](CHALLENGE.md).
 
 ### Team P4 integration
 
+The saved highest-external-spellF1 model is the
+[two-seed Kalman TCN ensemble](models/possession-kalman-ensemble-20261116/README.md)
+(spellF1 **0.592973**). Its checkpoints, preprocessing and frozen decoder are
+included, with portable inference via `python -m tiki_data.p2.selected`.
+
 The complete P1-P4 workflow, including tracking rules and Viterbi decoding, is
 documented in **[docs/P3.md](docs/P3.md)**. Train, compare three methods, freeze the
 validation winner, evaluate it once on the external test match, and reproduce:

@@ -74,3 +74,6 @@ artifacts/
 *.npz
 !data/external/idsse_processed/**/*.npz
 **/submission.csv
+
+# Private comparison reference: local only, never publish.
+BAR-ATH_majority_FINAL.csv
