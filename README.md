@@ -55,10 +55,15 @@ getting to the actual question. See [CHALLENGE.md](CHALLENGE.md).
 
 ### Team P4 integration
 
-The saved highest-external-spellF1 model is the
+The saved default model is the
 [two-seed Kalman TCN ensemble](models/possession-kalman-ensemble-20261116/README.md)
 (spellF1 **0.592973**). Its checkpoints, preprocessing and frozen decoder are
 included, with portable inference via `python -m tiki_data.p2.selected`.
+
+The subsequent experiments, aggregate results, incomplete runs and provenance
+corrections are recorded in the [16 November experiment audit](docs/EXPERIMENT_AUDIT_2026-11-16.md).
+Those experiments did not replace the saved default. New research checkpoints and
+competition-derived files remain local and Git-ignored.
 
 The complete P1-P4 workflow, including tracking rules and Viterbi decoding, is
 documented in **[docs/P3.md](docs/P3.md)**. Train, compare three methods, freeze the
