@@ -1,0 +1,3 @@
+# No training entry point is released. The retained training-oriented
+# utilities use the same scientific Python runtime as inference.
+-r requirements.txt

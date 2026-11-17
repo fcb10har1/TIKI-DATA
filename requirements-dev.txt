@@ -1,2 +1,4 @@
--r requirements.txt
+# Inference dependencies are installed first so tests exercise the released
+# pipeline rather than an ambient user environment.
+-r requirements-inference.txt
 pytest==9.2.0
