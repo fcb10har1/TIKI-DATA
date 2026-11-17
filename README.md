@@ -5,7 +5,8 @@ pipeline: the frozen historical TCN, the continued seed42 segment proposer,
 the original seed43 proposer, and the correction-verification forest.
 All four checkpoints are required components of this pipeline.
 
-The technical document to upload is [TIKIDATA.md](TIKIDATA.md).
+The team-named technical document is prepared locally at
+`local_submission_docs/TIKIDATA.md` and is intentionally not tracked.
 The possession file is generated locally as `runs/submission/TIKIDATA.csv`.
 Competition tracking, labels, predictions, other model checkpoints and research
 outputs are excluded from this release. The prior work remains in Git history
@@ -24,6 +25,9 @@ python -m venv .venv
 The pinned CPU PyTorch wheel comes from the official PyTorch wheel index.
 The model bundle is included in `models/continued-verifier/`; training and the
 external dataset are not required to regenerate the submission.
+The files are ordinary Git files, not LFS pointers or private downloads.
+Verify their checksums with `python tools/verify_release.py`.
+Attribution and licence boundaries are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Regenerate the submission
 
@@ -35,13 +39,34 @@ repository root, with those files under `data/tactical/`, run:
 .venv\Scripts\python.exe evaluation/validate_submission.py runs/submission/TIKIDATA.csv
 ```
 
-For files elsewhere, pass `--atd-meta PATH_TO_XML --atd-raw PATH_TO_TXT`.
+For an authorised input bundle outside Git, pass
+`--atd-meta PATH_TO_XML --atd-raw PATH_TO_TXT` to that same command.
+`H` means home possession, `A` away possession, `D` dead ball, and `X` an
+outside-period output. The neural class order is H/A/D; X is not a trained
+class. The neural probabilities are not averaged: two independent segment
+proposers and a verification forest correct the historical baseline.
+The feature order, normalization, decoder settings and checkpoint hashes
+are recorded in `models/continued-verifier/inference_manifest.json`.
 The command reads the complete tactical tracking timeline, writes exactly
 199,319 rows, runs the official format checks, and verifies the complete CSV's
 SHA-256 against the frozen reference. It refuses to overwrite an existing file.
 It does not read any ground-truth labels, video, tactical tags or cached predictions.
 If an exact-match check fails, confirm the input files and pinned CPU environment;
 do not edit prediction rows.
+The measured runtime and fresh-environment reproduction checks are recorded in
+`models/continued-verifier/release_validation.json`. CPU execution was tested;
+GPU execution and other operating systems are not claimed as verified.
+
+## Data-use policy for this release
+
+The newer organiser-email clarification supplied by the team takes precedence
+over conflicting older wording in `RULES.md`: all training, fitting,
+calibration and tuning use external data only. No adaptation, including
+self-supervised adaptation, is performed on the supplied game. No predictions
+are checked against its video, no manual labels or corrections are made, and
+supplied data is not uploaded to AI services. Local automatic format and
+reproduction checks are permitted. This packaging task performs no new model
+training, tuning, scoring or selection.
 
 ## Recorded evaluation
 
@@ -55,7 +80,10 @@ These are existing frozen-run results, not full-match competition scores.
 The public window has been inspected through repeated aggregate diagnostics;
 it is not an independent test estimate. No training or threshold tuning used
 competition labels. The final release is the user's explicit choice following
-those diagnostics. See the technical document for limitations and provenance.
+those diagnostics. The seven external matches have a historical development
+record; the reserved split name does not establish a fresh independent test.
+This release reports no new external-test result. Dataset and model provenance
+are recorded in `models/continued-verifier/training_provenance.json`.
 
 ## Tests and files
 
@@ -70,7 +98,17 @@ those diagnostics. See the technical document for limitations and provenance.
 - `p3/`: the duration-chain implementation used by this model.
 - `models/continued-verifier/`: only the selected model's required assets, hashes and provenance.
 - `evaluation/`: the organisers' scorer and format validator, unchanged.
+- `tools/verify_release.py`: source/model checksums and exact-CSV verification.
 - `SUBMISSION.md`, `RULES.md`, `DATA.md`, `EVALUATION.md`: organiser requirements.
+
+Optional research utilities retained for inspection are train-only scaling and
+window construction in `tiki_data/p2/data.py`, the segment-training objective
+in `verifier_segments.py`, and external correction-target generation in
+`verifier_edits.py`. These are not an end-to-end retraining command. Judges
+load the frozen assets directly. Archived experimental training orchestration
+is not needed for inference. Local automatic scoring uses
+`evaluation/run_evaluation.py` with separately authorised labels and is optional.
+Negative-result summaries are preserved in the local technical document.
 
 Upload `TIKIDATA.csv`, provide this public repository URL, and upload
 `TIKIDATA.md` through the organisers' form using the registered team name

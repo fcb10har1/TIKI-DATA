@@ -1,0 +1,610 @@
+{
+  "schema_version": 1,
+  "candidate": "continued_verifier_control_seed42",
+  "verified_inference_source_commit": "75d97c8358e6e9beca61f4afa9d91597733c602f",
+  "source_note": "Inference implementation and selected weight tensors are unchanged from this verified release; later packaging commits update documentation and checks only.",
+  "configuration_sha256": "aba557e74b10c6d2a4d2f501817232d02fd67d2ff9be7666bd4c18369737f8a5",
+  "class_order": [
+    "H",
+    "A",
+    "D"
+  ],
+  "output_labels": [
+    "H",
+    "A",
+    "D",
+    "X"
+  ],
+  "fps": 25,
+  "feature_schema": {
+    "ball_dependent": [
+      "ball_speed_mps",
+      "home_nearest_ball_m",
+      "away_nearest_ball_m",
+      "home_second_nearest_ball_m",
+      "away_second_nearest_ball_m",
+      "home_players_within_3m",
+      "away_players_within_3m",
+      "home_players_within_5m",
+      "away_players_within_5m",
+      "ball_to_home_centroid_m",
+      "ball_to_away_centroid_m"
+    ],
+    "features": [
+      {
+        "definition": "Observed scalar ball speed in metres per second",
+        "name": "ball_speed_mps",
+        "sources": [
+          "ball.speed"
+        ]
+      },
+      {
+        "definition": "Minimum ball-to-observed-home-player distance in metres",
+        "name": "home_nearest_ball_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Minimum ball-to-observed-away-player distance in metres",
+        "name": "away_nearest_ball_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Second-smallest ball-to-home-player distance in metres",
+        "name": "home_second_nearest_ball_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Second-smallest ball-to-away-player distance in metres",
+        "name": "away_second_nearest_ball_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Observed home players within three metres of the ball",
+        "name": "home_players_within_3m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Observed away players within three metres of the ball",
+        "name": "away_players_within_3m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Observed home players within five metres of the ball",
+        "name": "home_players_within_5m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Observed away players within five metres of the ball",
+        "name": "away_players_within_5m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Distance from the ball to the observed home-team centroid in metres",
+        "name": "ball_to_home_centroid_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Distance from the ball to the observed away-team centroid in metres",
+        "name": "ball_to_away_centroid_m",
+        "sources": [
+          "ball.x",
+          "ball.y",
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Observed home-team lateral y range in metres; requires two players",
+        "name": "home_width_m",
+        "sources": [
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Observed away-team lateral y range in metres; requires two players",
+        "name": "away_width_m",
+        "sources": [
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Observed home-team longitudinal x range in metres; requires two players",
+        "name": "home_length_m",
+        "sources": [
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Observed away-team longitudinal x range in metres; requires two players",
+        "name": "away_length_m",
+        "sources": [
+          "away.positions"
+        ]
+      },
+      {
+        "definition": "Mean scalar speed of observed home players in metres per second",
+        "name": "home_mean_speed_mps",
+        "sources": [
+          "home.speeds"
+        ]
+      },
+      {
+        "definition": "Mean scalar speed of observed away players in metres per second",
+        "name": "away_mean_speed_mps",
+        "sources": [
+          "away.speeds"
+        ]
+      },
+      {
+        "definition": "Number of observed home-player tracklets in the frame",
+        "name": "home_players_observed",
+        "sources": [
+          "home.positions"
+        ]
+      },
+      {
+        "definition": "Number of observed away-player tracklets in the frame",
+        "name": "away_players_observed",
+        "sources": [
+          "away.positions"
+        ]
+      }
+    ],
+    "notes": "V1 at 25 Hz. Coordinates are converted to pitch metres before feature calculation. Home/away are match-relative sides. Features are permutation-invariant over temporary track slots. Missing values use zero placeholders with observed=False. The same numerical definitions must be used for external and supplied matches. No labels, ball-status fields or tactical tags enter the feature path."
+  },
+  "feature_order": [
+    "ball_speed_mps",
+    "home_nearest_ball_m",
+    "away_nearest_ball_m",
+    "home_second_nearest_ball_m",
+    "away_second_nearest_ball_m",
+    "home_players_within_3m",
+    "away_players_within_3m",
+    "home_players_within_5m",
+    "away_players_within_5m",
+    "ball_to_home_centroid_m",
+    "ball_to_away_centroid_m",
+    "home_width_m",
+    "away_width_m",
+    "home_length_m",
+    "away_length_m",
+    "home_mean_speed_mps",
+    "away_mean_speed_mps",
+    "home_players_observed",
+    "away_players_observed"
+  ],
+  "preprocessing": {
+    "mask_ball_speed": true,
+    "append_observation_masks": true,
+    "missing_values": "zero after train-only normalization; observation mask remains false",
+    "core_frames": 512,
+    "context": "offline noncausal; independent half/outside blocks"
+  },
+  "components": [
+    {
+      "role": "frame_tcn",
+      "file": "historical.pt",
+      "sha256": "4951144e282cbdcab0aa1dfc9c479de3f58980722aed730354569b71d042acc8",
+      "model_config": {
+        "dilations": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "dropout": 0.1,
+        "kernel": 3,
+        "width": 32
+      },
+      "normalization": {
+        "feature_names": [
+          "ball_speed_mps",
+          "home_nearest_ball_m",
+          "away_nearest_ball_m",
+          "home_second_nearest_ball_m",
+          "away_second_nearest_ball_m",
+          "home_players_within_3m",
+          "away_players_within_3m",
+          "home_players_within_5m",
+          "away_players_within_5m",
+          "ball_to_home_centroid_m",
+          "ball_to_away_centroid_m",
+          "home_width_m",
+          "away_width_m",
+          "home_length_m",
+          "away_length_m",
+          "home_mean_speed_mps",
+          "away_mean_speed_mps",
+          "home_players_observed",
+          "away_players_observed"
+        ],
+        "mean": [
+          0.0,
+          7.368073646394086,
+          6.958107544906313,
+          13.298582542913046,
+          13.303379486207895,
+          0.3638198555205737,
+          0.3742239254827439,
+          0.6419339371525072,
+          0.6554863752868964,
+          23.72282743443293,
+          23.534893300359105,
+          37.70514231368765,
+          38.451864291899405,
+          51.91476628553402,
+          52.74206606198649,
+          1.8187582912825335,
+          1.7677310884284048,
+          11.0,
+          10.769169613487566
+        ],
+        "scale": [
+          1.0,
+          8.331617995198917,
+          7.677217616326221,
+          9.061265473364823,
+          8.984476287639616,
+          0.5469301091760945,
+          0.5454585067690788,
+          0.756449600672424,
+          0.7376707990096621,
+          11.20309856148135,
+          11.030896145671147,
+          10.864184334085598,
+          10.438115352474036,
+          13.790980970247235,
+          13.45110677624626,
+          0.9968770040959474,
+          1.0178867654161627,
+          1.0,
+          0.4213641170946498
+        ],
+        "observed_count": [
+          0,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278
+        ],
+        "fit_scope": "train_matches_in_period_observed_only",
+        "mask_ball_speed": true,
+        "train_match_ids": [
+          "J03WMX",
+          "J03WN1",
+          "J03WOH",
+          "J03WOY"
+        ]
+      },
+      "frame_class_order": [
+        "H",
+        "A",
+        "D"
+      ]
+    },
+    {
+      "role": "continued_segment_seed42",
+      "file": "segment_seed42.pt",
+      "sha256": "8d532a4da4d1ea2ea95e756dcb114cbecd971ae0afd1769376642e216925ebee",
+      "model_config": {
+        "dilations": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "dropout": 0.1,
+        "kernel": 3,
+        "width": 32
+      },
+      "normalization": {
+        "feature_names": [
+          "ball_speed_mps",
+          "home_nearest_ball_m",
+          "away_nearest_ball_m",
+          "home_second_nearest_ball_m",
+          "away_second_nearest_ball_m",
+          "home_players_within_3m",
+          "away_players_within_3m",
+          "home_players_within_5m",
+          "away_players_within_5m",
+          "ball_to_home_centroid_m",
+          "ball_to_away_centroid_m",
+          "home_width_m",
+          "away_width_m",
+          "home_length_m",
+          "away_length_m",
+          "home_mean_speed_mps",
+          "away_mean_speed_mps",
+          "home_players_observed",
+          "away_players_observed"
+        ],
+        "mean": [
+          0.0,
+          7.368073646394086,
+          6.958107544906313,
+          13.298582542913046,
+          13.303379486207895,
+          0.3638198555205737,
+          0.3742239254827439,
+          0.6419339371525072,
+          0.6554863752868964,
+          23.72282743443293,
+          23.534893300359105,
+          37.70514231368765,
+          38.451864291899405,
+          51.91476628553402,
+          52.74206606198649,
+          1.8187582912825335,
+          1.7677310884284048,
+          11.0,
+          10.769169613487566
+        ],
+        "scale": [
+          1.0,
+          8.331617995198917,
+          7.677217616326221,
+          9.061265473364823,
+          8.984476287639616,
+          0.5469301091760945,
+          0.5454585067690788,
+          0.756449600672424,
+          0.7376707990096621,
+          11.20309856148135,
+          11.030896145671147,
+          10.864184334085598,
+          10.438115352474036,
+          13.790980970247235,
+          13.45110677624626,
+          0.9968770040959474,
+          1.0178867654161627,
+          1.0,
+          0.4213641170946498
+        ],
+        "observed_count": [
+          0,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278
+        ],
+        "fit_scope": "train_matches_in_period_observed_only",
+        "mask_ball_speed": true,
+        "train_match_ids": [
+          "J03WMX",
+          "J03WN1",
+          "J03WOH",
+          "J03WOY"
+        ]
+      },
+      "frame_class_order": [
+        "H",
+        "A",
+        "D"
+      ]
+    },
+    {
+      "role": "segment_seed43",
+      "file": "segment_seed43.pt",
+      "sha256": "6b58ae5542948f4e6da5049f1152f82b9608e622fa90899e804975b475399c38",
+      "model_config": {
+        "dilations": [
+          1,
+          2,
+          4,
+          8,
+          16
+        ],
+        "dropout": 0.1,
+        "kernel": 3,
+        "width": 32
+      },
+      "normalization": {
+        "feature_names": [
+          "ball_speed_mps",
+          "home_nearest_ball_m",
+          "away_nearest_ball_m",
+          "home_second_nearest_ball_m",
+          "away_second_nearest_ball_m",
+          "home_players_within_3m",
+          "away_players_within_3m",
+          "home_players_within_5m",
+          "away_players_within_5m",
+          "ball_to_home_centroid_m",
+          "ball_to_away_centroid_m",
+          "home_width_m",
+          "away_width_m",
+          "home_length_m",
+          "away_length_m",
+          "home_mean_speed_mps",
+          "away_mean_speed_mps",
+          "home_players_observed",
+          "away_players_observed"
+        ],
+        "mean": [
+          0.0,
+          7.368073646394086,
+          6.958107544906313,
+          13.298582542913046,
+          13.303379486207895,
+          0.3638198555205737,
+          0.3742239254827439,
+          0.6419339371525072,
+          0.6554863752868964,
+          23.72282743443293,
+          23.534893300359105,
+          37.70514231368765,
+          38.451864291899405,
+          51.91476628553402,
+          52.74206606198649,
+          1.8187582912825335,
+          1.7677310884284048,
+          11.0,
+          10.769169613487566
+        ],
+        "scale": [
+          1.0,
+          8.331617995198917,
+          7.677217616326221,
+          9.061265473364823,
+          8.984476287639616,
+          0.5469301091760945,
+          0.5454585067690788,
+          0.756449600672424,
+          0.7376707990096621,
+          11.20309856148135,
+          11.030896145671147,
+          10.864184334085598,
+          10.438115352474036,
+          13.790980970247235,
+          13.45110677624626,
+          0.9968770040959474,
+          1.0178867654161627,
+          1.0,
+          0.4213641170946498
+        ],
+        "observed_count": [
+          0,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278,
+          567278
+        ],
+        "fit_scope": "train_matches_in_period_observed_only",
+        "mask_ball_speed": true,
+        "train_match_ids": [
+          "J03WMX",
+          "J03WN1",
+          "J03WOH",
+          "J03WOY"
+        ]
+      },
+      "frame_class_order": [
+        "H",
+        "A",
+        "D"
+      ]
+    }
+  ],
+  "verifier": {
+    "file": "verifier_seed42.joblib",
+    "sha256": "139ae3661fcdce6246e8a5eb051564e4e875fba9fb0e8c84f66e59dbc8d46c90"
+  },
+  "combination": {
+    "probability_averaging": false,
+    "historical_probability_weight": 1.0,
+    "proposers": "Two ordered independent interval proposals; their probabilities are verifier features, not averaged into the historical probabilities."
+  },
+  "historical_decoder": {
+    "duration": "hard",
+    "minimum": 1.0,
+    "transition_penalty": 0.0,
+    "missing_weight": 0.0
+  },
+  "proposal_baseline_decoder": {
+    "duration": "hard",
+    "minimum": 1.0,
+    "transition_penalty": 0.0,
+    "missing_weight": 0.5
+  },
+  "decoder_constants": {
+    "temperature": 4.0,
+    "mean_poss_s": 14.0,
+    "mean_dead_s": 10.0,
+    "turnover_frac": 0.5,
+    "restart_switch": 0.8,
+    "start_alive": 0.5,
+    "prob_floor": 0.0001,
+    "use_mbr": false
+  },
+  "proposal_decoder": {
+    "threshold": 0.3,
+    "beta": 3.0,
+    "transition_cost": 1.0
+  },
+  "maximum_edit_seconds": 60.0,
+  "acceptance_threshold": 0.3,
+  "reference_submission": "TIKIDATA.csv",
+  "reference_sha256": "f336a4e16568c441e08188f6bfcc53fa41d23463a0d0452dfc231c8eec2fab85",
+  "exact_inference_command": "python -m tiki_data --atd-meta PATH_TO_XML --atd-raw PATH_TO_TXT --out runs/submission/TIKIDATA.csv",
+  "selected_by": "Explicit user request and completed active deployment manifest; no model selection performed during final packaging."
+}

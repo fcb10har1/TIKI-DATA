@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "candidate": "continued_verifier_control_seed42",
-  "validated_utc": "2026-11-17T17:40:47.373691+00:00",
+  "validated_utc": "2026-11-17T17:59:50.259204+00:00",
   "python": "3.13.1",
   "platform": "Windows 64-bit CPU",
   "versions": {
@@ -16,7 +16,7 @@
     "threadpoolctl": "3.6.0"
   },
   "isolated_release_checkout": true,
-  "isolated_source_tree": "18fddfad875ba1a47983c252730b5e8b3ad9a3ad",
+  "isolated_source_tree": "c8022880e9cc112e80b71e9dbf76d32b143b2494",
   "raw_tracking_to_submission_reproduced": true,
   "rows": 199319,
   "official_format_valid": true,
@@ -31,10 +31,129 @@
   "competition_data_and_prediction_files_tracked": 0,
   "retired_files_preserved_locally": 169,
   "public_repository_verified": true,
-  "dependency_installation": "Used the recorded installed CPU environment; a new dependency download was not repeated.",
+  "dependency_installation": "Installed pinned runtime packages from public PyPI/official PyTorch indexes in a newly created CPython3.13.1 venv. No PYTHONPATH or user-site dependencies.",
   "commands": [
     "python -m tiki_data --atd-meta PATH_TO_TACTICAL_XML --atd-raw PATH_TO_TACTICAL_TXT --out runs/submission/TIKIDATA.csv",
     "python -m pytest -c pytest.ini --rootdir=. tests/test_submission_release.py -q -p no:cacheprovider",
     "python evaluation/validate_submission.py runs/submission/TIKIDATA.csv"
+  ],
+  "newly_installed_dependencies": true,
+  "ignored_experiment_dependencies": false,
+  "downloaded_model_assets_verified": true,
+  "models_retrieved_without_authentication": 4,
+  "inference_wall_seconds": 53.40363829996204,
+  "package_dependency_check_passed": true,
+  "source_commit_for_unchanged_inference": "75d97c8358e6e9beca61f4afa9d91597733c602f",
+  "final_packaging_has_no_model_changes": true,
+  "technical_document_location": "local_submission_docs/TIKIDATA.md (untracked)",
+  "historical_file_check": {
+    "reachable_commits": 25,
+    "text_blobs_scanned": 323,
+    "restricted_candidates": 0,
+    "secret_candidates": 0,
+    "organiser_public_assets_verified": 6
+  },
+  "history_note": "The former TIKIDATA.md remains in earlier shared history. It contains methodology/aggregate metrics, not restricted inputs. No history rewrite.",
+  "inference_source_hashes": [
+    {
+      "file": "games.py",
+      "sha256": "3b2122794e9e0476e2b3a871d14880e5fa47c4feaeacf99caef054c2309076ce"
+    },
+    {
+      "file": "evaluation/possession_metrics.py",
+      "sha256": "341bad48904b489d6e875397b27687f5d6a4d22a397f3dc8af3a00d48f16874d"
+    },
+    {
+      "file": "evaluation/validate_submission.py",
+      "sha256": "07ac29499acbd337e1dc1de1832d63f6e1fa1d981e22f6ad08212529e2bbee14"
+    },
+    {
+      "file": "evaluation/run_evaluation.py",
+      "sha256": "1c61564fe52499ba4af3006fb5eb4147b825e92bf516651add80de49d267b19f"
+    },
+    {
+      "file": "tiki_data/__init__.py",
+      "sha256": "a915ff778af9771a7f086f90bd481d69d719c8b9b5fcdd440a02544e538a232a"
+    },
+    {
+      "file": "tiki_data/__main__.py",
+      "sha256": "1beeda365f8d02b371e5f7d3d02271d2ddee684a63a7284f28a31aae9cdaf2c6"
+    },
+    {
+      "file": "tiki_data/artifacts.py",
+      "sha256": "288bb11fbdb5cdc40ea698a4050abfe81b7a0d9a83cf85d0a7b2256cae4a6272"
+    },
+    {
+      "file": "tiki_data/contracts.py",
+      "sha256": "6385d07cbebb5bf47c4adfa44e357375be60723fe00a22792bba9e5d39b8c6a7"
+    },
+    {
+      "file": "tiki_data/submission.py",
+      "sha256": "74c8a45d129d601d97b7bd6fbc0610770c5da120b641edb6a0e6033b30e6aeaa"
+    },
+    {
+      "file": "tiki_data/p1/__init__.py",
+      "sha256": "3876757d349b72aa41df759b7a1d36de8103c68122f6503db15dae534cbad07e"
+    },
+    {
+      "file": "tiki_data/p1/features.py",
+      "sha256": "00707eb81cc58faaccdf5cbb41ab54ee2b05634f26406ccbcbfa4fb3fb82e4fd"
+    },
+    {
+      "file": "tiki_data/p1/metrica.py",
+      "sha256": "863c882019b3b7463e7209431ea70b409601a04af865b7fe9e0d822cfa1524cb"
+    },
+    {
+      "file": "tiki_data/p1/ball_observations.py",
+      "sha256": "411787b9a099b7fdebbda3e18c1954857f6c643014ab019d4a72a30765b862d1"
+    },
+    {
+      "file": "tiki_data/p2/__init__.py",
+      "sha256": "7fb4233ae3fb811f84bdfda76d808bc3736297b123fe3e0a0311fd18781b43c8"
+    },
+    {
+      "file": "tiki_data/p2/active.py",
+      "sha256": "0a7f78d201546fc73984eb9e36ad556d5340cf22fe6e0932b6033b442d048dfb"
+    },
+    {
+      "file": "tiki_data/p2/data.py",
+      "sha256": "3c5087f857b9e13355994fecb509032d2e44679461472ac2ea9cab32ccf9d772"
+    },
+    {
+      "file": "tiki_data/p2/model.py",
+      "sha256": "b6a81fc16d277e3b8add97000061fe6d7ebb44cdaf1efb4b37371affb6045f3e"
+    },
+    {
+      "file": "tiki_data/p2/inference.py",
+      "sha256": "d731eca877f32718566485d9808a11975a7e97d7e9594f50548fa002998c6192"
+    },
+    {
+      "file": "tiki_data/p2/verifier.py",
+      "sha256": "0413a7540ef3636a21fa24701b1c8c2dbf35db1733c16c72e6ed2580f5c0dc31"
+    },
+    {
+      "file": "tiki_data/p2/verifier_segments.py",
+      "sha256": "c3a251dece66f73b010f35cd2118629c0252492e0b2cc513b28f7fee8d062a0d"
+    },
+    {
+      "file": "tiki_data/p2/verifier_edits.py",
+      "sha256": "012ae9f6609a59fc25ff9c6683d098819aacce384d2222fdca1b985eb40a904a"
+    },
+    {
+      "file": "tiki_data/p2/verifier_decoder.py",
+      "sha256": "b695b86890bbdeb117f4d05a44bbbab6572e7e6cf639077d875b32b4c5723b8c"
+    },
+    {
+      "file": "p3/__init__.py",
+      "sha256": "81f86758a444ead9268c1017ae5502c62e82f8866cefcfb5c0844dd80ef918f5"
+    },
+    {
+      "file": "p3/decoder.py",
+      "sha256": "9ba8de3ab611d234fe49c2b34a22a0a4d781c9b4545e846da210a7be779f5877"
+    },
+    {
+      "file": "p3/spells.py",
+      "sha256": "4b958514156bcc544d7900e028198f22facec7c808410ca38138d331126da549"
+    }
   ]
 }

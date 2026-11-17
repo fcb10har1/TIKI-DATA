@@ -1,6 +1,8 @@
 # Local competition data, predictions, archives and experiments must never be pushed.
 /runs/
 /artifacts/
+/local_submission_docs/
+/TIKIDATA.md
 /experiments/
 /docs/
 /configs/
@@ -42,7 +44,6 @@ __pycache__/
 .DS_Store
 
 # Retired tracked source remains local; only the selected pipeline is released.
-/CITATION.cff
 /p3/official.py
 /p3/rules.py
 /p3/scripts/ablation.py

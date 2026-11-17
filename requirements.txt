@@ -20,3 +20,5 @@ MarkupSafe==3.0.3
 python-dateutil==2.9.0.post0
 six==1.17.0
 tzdata==2026.1
+narwhals==2.29.0
+setuptools==84.2.1
