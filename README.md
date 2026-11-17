@@ -12,6 +12,18 @@ Competition tracking, labels, predictions, other model checkpoints and research
 outputs are excluded from this release. The prior work remains in Git history
 and in the author's local archive.
 
+## Repository map
+
+- `tiki_data/` is the released inference implementation: P1 feature extraction and P2 frozen
+  model/decoder code.
+- `models/continued-verifier/` is the active configuration, normalization metadata, checkpoints,
+  verifier, hashes and provenance. Do not substitute assets from an older experiment.
+- `evaluation/` contains the unchanged official format validator and optional scorer.
+- `tools/verify_release.py` checks that the selected source and model assets are present and
+  materialized, then can check a locally generated CSV.
+- `p3/` and the training-oriented helpers under `tiki_data/p2/` are retained implementation
+  dependencies/research history, not a training or model-selection command.
+
 ## Install
 
 Use **CPython 3.13.1, 64-bit, CPU**. This release is validated on Windows.
@@ -19,7 +31,7 @@ From a fresh clone, in PowerShell:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pip install -r requirements-inference.txt
 ```
 
 The pinned CPU PyTorch wheel comes from the official PyTorch wheel index.
@@ -28,6 +40,10 @@ external dataset are not required to regenerate the submission.
 The files are ordinary Git files, not LFS pointers or private downloads.
 Verify their checksums with `python tools/verify_release.py`.
 Attribution and licence boundaries are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+`requirements.txt` remains a compatibility entry point for the inference environment.
+`requirements-dev.txt` adds only the test runner. No training entry point or separate training
+dependency set is required for this release; `requirements-training.txt` documents that the
+retained training-oriented utilities use the same runtime if inspected locally.
 
 ## Regenerate the submission
 
@@ -85,11 +101,21 @@ record; the reserved split name does not establish a fresh independent test.
 This release reports no new external-test result. Dataset and model provenance
 are recorded in `models/continued-verifier/training_provenance.json`.
 
-## Tests and files
+## Validation and files
 
 ```powershell
+.venv\Scripts\python.exe tools/verify_release.py
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m pytest tests/test_submission_release.py -q
+```
+
+After generating a local CSV, run both checks below. The first checks the official CSV contract;
+the second also checks the frozen SHA-256 reference when the authorised input bundle and pinned
+environment are available:
+
+```powershell
+.venv\Scripts\python.exe evaluation/validate_submission.py runs/submission/TIKIDATA.csv
+.venv\Scripts\python.exe tools/verify_release.py --csv runs/submission/TIKIDATA.csv
 ```
 
 - `tiki_data/submission.py`: raw tracking to validated CSV.

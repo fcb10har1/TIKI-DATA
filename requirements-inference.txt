@@ -1,0 +1,4 @@
+# Frozen runtime requirements for the selected inference pipeline.
+# Keep this file in sync with requirements.txt; the latter remains the
+# backwards-compatible command used by the original submission README.
+-r requirements.txt

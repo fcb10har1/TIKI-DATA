@@ -13,6 +13,15 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def require_materialized(path):
+    if not path.is_file() or path.stat().st_size == 0:
+        raise ValueError('Missing model asset: ' + str(path.relative_to(ROOT)))
+    prefix = path.read_bytes()[:64]
+    if prefix.startswith(b'version https://git-lfs.github.com/spec/v1'):
+        raise ValueError('Model asset is an unresolved Git LFS pointer: ' +
+                         str(path.relative_to(ROOT)))
+
+
 def verify(prediction=None):
     selection = json.loads((BUNDLE / 'selection.json').read_text(encoding='utf-8'))
     path = ROOT / selection['configuration']
@@ -21,7 +30,9 @@ def verify(prediction=None):
     config = json.loads(path.read_text(encoding='utf-8'))
     assets = [config['historical'], *config['proposers'], config['verifier']]
     for asset in assets:
-        if digest(BUNDLE / asset['file']) != asset['sha256']:
+        model_path = BUNDLE / asset['file']
+        require_materialized(model_path)
+        if digest(model_path) != asset['sha256']:
             raise ValueError('Model asset checksum mismatch: ' + asset['file'])
     for source in config['source_files']:
         if digest(ROOT / source['file']) != source['sha256']:
