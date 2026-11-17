@@ -1,2 +1,0 @@
--r requirements-p4.txt
-pytest

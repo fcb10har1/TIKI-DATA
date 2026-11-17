@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "kind": "correction_verifier",
+  "candidate": "continued_verifier_control_seed42",
+  "class_order": [
+    "H",
+    "A",
+    "D"
+  ],
+  "fps": 25,
+  "historical": {
+    "file": "historical.pt",
+    "sha256": "4951144e282cbdcab0aa1dfc9c479de3f58980722aed730354569b71d042acc8"
+  },
+  "proposers": [
+    {
+      "file": "segment_seed42.pt",
+      "sha256": "8d532a4da4d1ea2ea95e756dcb114cbecd971ae0afd1769376642e216925ebee"
+    },
+    {
+      "file": "segment_seed43.pt",
+      "sha256": "6b58ae5542948f4e6da5049f1152f82b9608e622fa90899e804975b475399c38"
+    }
+  ],
+  "verifier": {
+    "file": "verifier_seed42.joblib",
+    "sha256": "139ae3661fcdce6246e8a5eb051564e4e875fba9fb0e8c84f66e59dbc8d46c90"
+  },
+  "historical_decoder": {
+    "duration": "hard",
+    "minimum": 1.0,
+    "transition_penalty": 0.0,
+    "missing_weight": 0.0
+  },
+  "proposal_baseline_decoder": {
+    "duration": "hard",
+    "minimum": 1.0,
+    "transition_penalty": 0.0,
+    "missing_weight": 0.5
+  },
+  "proposal_decoder": {
+    "threshold": 0.3,
+    "beta": 3.0,
+    "transition_cost": 1.0
+  },
+  "maximum_edit_seconds": 60.0,
+  "acceptance_threshold": 0.3,
+  "source_files": [
+    {
+      "file": "games.py",
+      "sha256": "3b2122794e9e0476e2b3a871d14880e5fa47c4feaeacf99caef054c2309076ce"
+    },
+    {
+      "file": "evaluation/possession_metrics.py",
+      "sha256": "341bad48904b489d6e875397b27687f5d6a4d22a397f3dc8af3a00d48f16874d"
+    },
+    {
+      "file": "evaluation/validate_submission.py",
+      "sha256": "07ac29499acbd337e1dc1de1832d63f6e1fa1d981e22f6ad08212529e2bbee14"
+    },
+    {
+      "file": "evaluation/run_evaluation.py",
+      "sha256": "1c61564fe52499ba4af3006fb5eb4147b825e92bf516651add80de49d267b19f"
+    },
+    {
+      "file": "tiki_data/__init__.py",
+      "sha256": "a915ff778af9771a7f086f90bd481d69d719c8b9b5fcdd440a02544e538a232a"
+    },
+    {
+      "file": "tiki_data/__main__.py",
+      "sha256": "1beeda365f8d02b371e5f7d3d02271d2ddee684a63a7284f28a31aae9cdaf2c6"
+    },
+    {
+      "file": "tiki_data/artifacts.py",
+      "sha256": "288bb11fbdb5cdc40ea698a4050abfe81b7a0d9a83cf85d0a7b2256cae4a6272"
+    },
+    {
+      "file": "tiki_data/contracts.py",
+      "sha256": "6385d07cbebb5bf47c4adfa44e357375be60723fe00a22792bba9e5d39b8c6a7"
+    },
+    {
+      "file": "tiki_data/submission.py",
+      "sha256": "74c8a45d129d601d97b7bd6fbc0610770c5da120b641edb6a0e6033b30e6aeaa"
+    },
+    {
+      "file": "tiki_data/p1/__init__.py",
+      "sha256": "3876757d349b72aa41df759b7a1d36de8103c68122f6503db15dae534cbad07e"
+    },
+    {
+      "file": "tiki_data/p1/features.py",
+      "sha256": "00707eb81cc58faaccdf5cbb41ab54ee2b05634f26406ccbcbfa4fb3fb82e4fd"
+    },
+    {
+      "file": "tiki_data/p1/metrica.py",
+      "sha256": "863c882019b3b7463e7209431ea70b409601a04af865b7fe9e0d822cfa1524cb"
+    },
+    {
+      "file": "tiki_data/p1/ball_observations.py",
+      "sha256": "411787b9a099b7fdebbda3e18c1954857f6c643014ab019d4a72a30765b862d1"
+    },
+    {
+      "file": "tiki_data/p2/__init__.py",
+      "sha256": "7fb4233ae3fb811f84bdfda76d808bc3736297b123fe3e0a0311fd18781b43c8"
+    },
+    {
+      "file": "tiki_data/p2/active.py",
+      "sha256": "0a7f78d201546fc73984eb9e36ad556d5340cf22fe6e0932b6033b442d048dfb"
+    },
+    {
+      "file": "tiki_data/p2/data.py",
+      "sha256": "3c5087f857b9e13355994fecb509032d2e44679461472ac2ea9cab32ccf9d772"
+    },
+    {
+      "file": "tiki_data/p2/model.py",
+      "sha256": "b6a81fc16d277e3b8add97000061fe6d7ebb44cdaf1efb4b37371affb6045f3e"
+    },
+    {
+      "file": "tiki_data/p2/inference.py",
+      "sha256": "d731eca877f32718566485d9808a11975a7e97d7e9594f50548fa002998c6192"
+    },
+    {
+      "file": "tiki_data/p2/verifier.py",
+      "sha256": "0413a7540ef3636a21fa24701b1c8c2dbf35db1733c16c72e6ed2580f5c0dc31"
+    },
+    {
+      "file": "tiki_data/p2/verifier_segments.py",
+      "sha256": "c3a251dece66f73b010f35cd2118629c0252492e0b2cc513b28f7fee8d062a0d"
+    },
+    {
+      "file": "tiki_data/p2/verifier_edits.py",
+      "sha256": "012ae9f6609a59fc25ff9c6683d098819aacce384d2222fdca1b985eb40a904a"
+    },
+    {
+      "file": "tiki_data/p2/verifier_decoder.py",
+      "sha256": "b695b86890bbdeb117f4d05a44bbbab6572e7e6cf639077d875b32b4c5723b8c"
+    },
+    {
+      "file": "p3/__init__.py",
+      "sha256": "81f86758a444ead9268c1017ae5502c62e82f8866cefcfb5c0844dd80ef918f5"
+    },
+    {
+      "file": "p3/decoder.py",
+      "sha256": "9ba8de3ab611d234fe49c2b34a22a0a4d781c9b4545e846da210a7be779f5877"
+    },
+    {
+      "file": "p3/spells.py",
+      "sha256": "4b958514156bcc544d7900e028198f22facec7c808410ca38138d331126da549"
+    }
+  ],
+  "environment": {
+    "python": "3.13.1",
+    "numpy": "2.4.6",
+    "torch": "2.10.0+cpu",
+    "sklearn": "1.9.0"
+  },
+  "evaluation": {
+    "external": {
+      "accuracy_pct": 86.07823059433564,
+      "macroF1": 0.850387492965106,
+      "spellF1": 0.5333158173836569,
+      "dead_ball_recall": 0.8600676747265549,
+      "missed_possessions": 213.91666666666666,
+      "extra_possessions": 125.5,
+      "spell_precision_05": 0.6090414028849193,
+      "spell_recall_05": 0.48029421695168256
+    },
+    "public": {
+      "accuracy_pct": 88.32,
+      "macroF1": 0.8651165139377309,
+      "spellF1": 0.65,
+      "dead_ball_recall": 0.6943498978897209,
+      "missed_possessions": 6,
+      "extra_possessions": 4,
+      "gt_possessions": 17,
+      "pred_possessions": 15,
+      "spell_precision_05": 0.7333333333333333,
+      "spell_recall_05": 0.6470588235294118
+    }
+  },
+  "selection": {
+    "kind": "explicit_user_request",
+    "reason": "User requested the frozen continued verifier on18November2026.",
+    "original_trial_selection": "Best external mean per-match SpellF1 in the matched continuation trial; control seed42.",
+    "training_and_tuning_data": "external_only",
+    "public_results": "Previously observed diagnostic scores; not an independent final test. No new public scoring or tuning for this release.",
+    "additional_training_or_threshold_changes": false
+  },
+  "reference_submission_sha256": "f336a4e16568c441e08188f6bfcc53fa41d23463a0d0452dfc231c8eec2fab85"
+}

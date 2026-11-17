@@ -1,236 +1,78 @@
-# More than a Hack 2027 — Phase 1: Ball Possession
+# TIKIDATA — continued verifier
 
-**Organised by [Metrica Sports](https://metrica-sports.com), [FC Barcelona](https://www.fcbarcelona.com)
-and the [Mobile World Capital Barcelona](https://www.mwcbarcelona.com)**, at the Talent Arena in Barcelona.
+This is the submission release for **TIKIDATA**. It contains one selected
+pipeline: the frozen historical TCN, the continued seed42 segment proposer,
+the original seed43 proposer, and the correction-verification forest.
+All four checkpoints are required components of this pipeline.
 
-A football data challenge on real professional match data, open to analysts, data scientists and
-engineers. You are given one complete LaLiga match — two camera feeds, automatic tracking of every
-player and the ball, automatic tactical tagging, and the camera-to-pitch geometry — and one
-question to answer with it.
+The technical document to upload is [TIKIDATA.md](TIKIDATA.md).
+The possession file is generated locally as `runs/submission/TIKIDATA.csv`.
+Competition tracking, labels, predictions, other model checkpoints and research
+outputs are excluded from this release. The prior work remains in Git history
+and in the author's local archive.
 
----
+## Install
 
-## The task
+Use **CPython 3.13.1, 64-bit, CPU**. This release is validated on Windows.
+From a fresh clone, in PowerShell:
 
-**For every frame of the match, say who has the ball.**
-
-```
-frame,label
-11185,A        away in possession, ball alive
-11186,A
-...
-18240,D        dead ball
-...
-18684,H        home in possession, ball alive
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-That is the whole task. One CSV, one row per video frame, 199,319 rows. It is scored automatically
-against a private frame-by-frame ground truth, so there is a number at the end and no argument
-about it — no jury, and no presentation to argue from.
+The pinned CPU PyTorch wheel comes from the official PyTorch wheel index.
+The model bundle is included in `models/continued-verifier/`; training and the
+external dataset are not required to regenerate the submission.
 
-The tracking is automatic and uncorrected: it has gaps and identity
-switches, and the ball itself is invisible on 41% of the frames you are scored on.
+## Regenerate the submission
 
----
+Obtain the organisers' licensed tactical tracking files separately. From the
+repository root, with those files under `data/tactical/`, run:
 
-## The challenge in one screen
-
-| |                                                                                                                           |
-|---|---------------------------------------------------------------------------------------------------------------------------|
-| **Input** | one full match: tactical video, broadcast video, automatic tracking **with the ball** for both, Smart Tagging, homography |
-| **Output** | `frame,label` CSV, 199,319 rows, labels `H` / `A` / `D` / `X`                                                             |
-| **Ranked on** | `spellF1` — how many of the match's real possessions you recovered as whole possessions                                   |
-| **Also reported** | `macroF1` — the per-frame view, and the first tie-break                                                                   |
-| **Baseline to beat** | `spellF1` **0.2433**, in this repository                                                                                  |
-| **Ground truth you get** | the first **5 minutes** of play — to check your pipeline, not to train on                                              |
-| **Ground truth you are scored on** | the full match, **private**                                                                                               |
-
-It is deliberately **not** a tracking challenge. The tracking, tagging and homography are given to
-you so that nobody has to rebuild detection, re-identification and camera calibration before
-getting to the actual question. See [CHALLENGE.md](CHALLENGE.md).
-
----
-
-## Try it right now
-
-### Team P4 integration
-
-The saved default model is the
-[two-seed Kalman TCN ensemble](models/possession-kalman-ensemble-20261116/README.md)
-(spellF1 **0.592973**). Its checkpoints, preprocessing and frozen decoder are
-included, with portable inference via `python -m tiki_data.p2.selected`.
-
-The subsequent experiments, aggregate results, incomplete runs and provenance
-corrections are recorded in the [16 November experiment audit](docs/EXPERIMENT_AUDIT_2026-11-16.md).
-Those experiments did not replace the saved default. New research checkpoints and
-competition-derived files remain local and Git-ignored.
-
-The complete P1-P4 workflow, including tracking rules and Viterbi decoding, is
-documented in **[docs/P3.md](docs/P3.md)**. Train, compare three methods, freeze the
-validation winner, evaluate it once on the external test match, and reproduce:
-
-```bash
-python -m tiki_data full --config configs/p2_idsse_v1.json --out runs/full-v1
+```powershell
+.venv\Scripts\python.exe -m tiki_data --out runs/submission/TIKIDATA.csv
+.venv\Scripts\python.exe evaluation/validate_submission.py runs/submission/TIKIDATA.csv
 ```
 
-The seven converted external matches are included. Supplied BAR-ATH inference
-requires the separately licensed ATD assets or `--supplied-features`.
-The first integrated results are in **[docs/INTEGRATION_2026-11-11.md](docs/INTEGRATION_2026-11-11.md)**.
+For files elsewhere, pass `--atd-meta PATH_TO_XML --atd-raw PATH_TO_TXT`.
+The command reads the complete tactical tracking timeline, writes exactly
+199,319 rows, runs the official format checks, and verifies the complete CSV's
+SHA-256 against the frozen reference. It refuses to overwrite an existing file.
+It does not read any ground-truth labels, video, tactical tags or cached predictions.
+If an exact-match check fails, confirm the input files and pinned CPU environment;
+do not edit prediction rows.
 
-The integration runner, P1–P3 handoff contracts, external-match benchmarks,
-experiment log, holdout freeze and reproduction checks are documented in
-**[docs/P4.md](docs/P4.md)**. Current integration status and remaining team inputs:
-**[docs/P4_STATUS.md](docs/P4_STATUS.md)**.
+## Recorded evaluation
 
-With the restricted tracking assets installed, one command generates and
-validates a full baseline CSV:
+| Evaluation | Accuracy | macroF1 | SpellF1 | Dead-ball recall |
+|---|---:|---:|---:|---:|
+| External, mean of two validation matches and six fixed conditions | 86.0782% | 0.850387 | 0.533316 | 0.860068 |
+| External, clean only, mean of two matches | 89.5823% | 0.885145 | 0.597009 | 0.917884 |
+| Supplied public five minutes, full tracking context | 88.3200% | 0.865117 | 0.650000 | 0.694350 |
 
-```bash
-python -m tiki_data run --config configs/baseline.json --out runs/v1-rules
+These are existing frozen-run results, not full-match competition scores.
+The public window has been inspected through repeated aggregate diagnostics;
+it is not an independent test estimate. No training or threshold tuning used
+competition labels. The final release is the user's explicit choice following
+those diagnostics. See the technical document for limitations and provenance.
+
+## Tests and files
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.venv\Scripts\python.exe -m pytest tests/test_submission_release.py -q
 ```
 
-Use the pinned P4 environment described in the runbook. To verify the complete
-integration without restricted data, run `python -m tiki_data demo --out runs/demo`.
-The demo is explicitly synthetic and establishes no football-model accuracy.
+- `tiki_data/submission.py`: raw tracking to validated CSV.
+- `tiki_data/p1/`: feature extraction and observed-ball availability.
+- `tiki_data/p2/`: frozen temporal networks, correction features and verifier.
+- `p3/`: the duration-chain implementation used by this model.
+- `models/continued-verifier/`: only the selected model's required assets, hashes and provenance.
+- `evaluation/`: the organisers' scorer and format validator, unchanged.
+- `SUBMISSION.md`, `RULES.md`, `DATA.md`, `EVALUATION.md`: organiser requirements.
 
-### Official starter
-
-The scorer, a 5-minute ground truth and four working baselines are in this repository. No
-enrolment, no download, no data:
-
-```bash
-pip install -r requirements.txt
-python evaluation/run_evaluation.py
-```
-
-Scored on the public 5 minutes, not on the full match -- which is why the order below is not the
-order of the floor quoted above:
-
-```
-scoreboard  gt/BAR-ATH_possession_gt_public.csv  199319 frames  7500 graded  21 gt segments
-ground truth has 17 possessions of mean 14.2 s  <- compare the poss and dur columns
-
-rank  submission                macroF1  spellF1   poss     dur  
-----  ------------------------  -------  -------  -----  ------  
-   1  baseline_smooth125         0.5812   0.4242     16    18.5  
-   2  baseline_smooth50          0.6207   0.3256     26    10.8  
-   3  baseline_smooth25          0.6200   0.2868     36     7.6  
-   4  baseline_raw               0.5972   0.0378    131     2.0  
-```
-
-Those four are **the same algorithm four times** — nearest tracked player to the ball, then a
-majority vote over a window. Only the window changes. `macroF1` barely moves; `spellF1` moves by a
-factor of eleven. That disagreement is the whole point of the metric, and
-[EVALUATION.md](EVALUATION.md) explains it.
-
-Once you have the data, regenerate them yourself and go further:
-
-```bash
-python starter/baseline.py                              # rebuild the four baselines
-python evaluation/validate_submission.py <your>.csv     # before every submission
-```
-
-**Validate every file before you submit it.** `validate_submission.py` runs exactly the checks the
-official scorer runs, and a file that fails them is dropped from the board with a one-line reason.
-It takes two seconds and it is the single most common way a good entry scores nothing.
-
----
-
-## Getting the data
-
-The match assets are released to enrolled participants who have accepted the terms of use.
-
-1. Enrol: **[More than A Hack 2027](https://landing.mobileworldcapital.com/more-than-a-hack-2027)**
-2. Read and sign the terms and conditions in the registration form
-3. You receive a download link.
-4. Unpack it into `./data`, or point `MTAH_DATA_DIR` at wherever you put it.
-
-Full description of every asset and how the frames line up: **[DATA.md](DATA.md)**.
-
----
-
-## Read these, in this order
-
-| | |
-|---|---|
-| **[CHALLENGE.md](CHALLENGE.md)** | the problem, the four labels, what counts as possession |
-| **[DATA.md](DATA.md)** | every provided asset, its format, and the frame alignment |
-| **[EVALUATION.md](EVALUATION.md)** | how you are scored, and why — read before optimising anything |
-| **[SUBMISSION.md](SUBMISSION.md)** | the file contract, the three deliverables, how to submit |
-| **[RULES.md](RULES.md)** | what you may and may not do |
-| **[FAQ.md](FAQ.md)** | |
-| **[OVERVIEW.md](OVERVIEW.md)** | the competition as a whole — context, why the 2027 format changed, the calendar |
-
-
----
-
-## What is in this repository
-
-```
-games.py                    per-match constants, asset paths and the frame alignment
-evaluation/
-  possession_metrics.py     the metric library — every number on the board is defined here
-  run_evaluation.py         the scorer. This exact file produces the official result
-  validate_submission.py    check a file before you send it
-  gt/                       the public 5-minute ground truth
-  results/                  the four baselines; put your submissions here
-starter/
-  baseline.py               the reference baseline, numpy only
-  load_atd.py               read the tracking and line it up with video frames
-  load_smart_tagging.py     read the tactical tagging as video-frame intervals
-  load_homography.py        read the homography; project pitch <-> pixels
-  utils.py                  pitch plotting for the notebooks
-  01_smart_tagging.ipynb    guided tour of the tactical tagging
-  02_tracking_atd.ipynb     guided tour of the tracking data, with plots
-  03_first_submission.ipynb data in, scored submission out — start here
-data/                       unpack the downloaded match assets here. Empty in a fresh clone
-```
-
-The scorer you run locally is the scorer that decides the competition. If it scores on your
-machine, it scores the same way on ours.
-
----
-
-## Requirements
-
-**Python 3.8 or newer.** The evaluation needs `numpy` and `pandas` and nothing else; it is tested
-under 3.8 and 3.11 and produces identical output under both. `starter/baseline.py` needs nothing
-more either — you can reach a scored submission without installing anything else.
-
-The notebooks additionally want `kloppy` and `matplotlib` (`requirements-starter.txt`), and
-**Python 3.9+ is recommended for those**: on Windows, installing Jupyter under 3.8 hits a
-`pywinpty` build failure that has nothing to do with this repository.
-
----
-
-## Timeline
-
-| |                |
-|---|----------------|
-| registration opens | **October 1, 2026** |
-| data released | **October 20, 2026** |
-| submission deadline | **November 17, 2026** |
-| results announced | **Before November 26, 2026**      |
-
----
-
-## Questions
-
-Open an issue for anything about the data, the metrics or the documentation — corrections are
-genuinely useful, and a fix that helps you helps everyone equally. For enrolment and the terms of
-use: **hackathon.talentarena@mobileworldcapital.com**.
-
-## Licence and citation
-
-The code and documentation in this repository are released under the MIT Licence — see
-[LICENSE](LICENSE). **The match data is not covered by it**: it is separately licensed for this
-competition only, under the terms you accept at enrolment.
-
-```bibtex
-@misc{mtah2027,
-  title  = {More than a Hack 2027: Phase 1 - Ball Possession},
-  author = {Metrica Sports and FC Barcelona Innovation Hub},
-  year   = {2027},
-  url    = {https://github.com/metrica-sports/more-than-a-hack-2027}
-}
-```
+Upload `TIKIDATA.csv`, provide this public repository URL, and upload
+`TIKIDATA.md` through the organisers' form using the registered team name
+**TIKIDATA**. The form URL comes from the registration email; this repository
+does not submit the form automatically.

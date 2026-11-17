@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "candidate": "continued_verifier_control_seed42",
+  "validated_utc": "2026-11-17T17:40:47.373691+00:00",
+  "python": "3.13.1",
+  "platform": "Windows 64-bit CPU",
+  "versions": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "torch": "2.10.0+cpu",
+    "scikit-learn": "1.9.0",
+    "joblib": "1.5.3",
+    "scipy": "1.17.1",
+    "numba": "0.68.1",
+    "llvmlite": "0.50.0",
+    "threadpoolctl": "3.6.0"
+  },
+  "isolated_release_checkout": true,
+  "isolated_source_tree": "18fddfad875ba1a47983c252730b5e8b3ad9a3ad",
+  "raw_tracking_to_submission_reproduced": true,
+  "rows": 199319,
+  "official_format_valid": true,
+  "exact_frozen_csv_match": true,
+  "submission_sha256": "f336a4e16568c441e08188f6bfcc53fa41d23463a0d0452dfc231c8eec2fab85",
+  "synthetic_tests_passed": 5,
+  "preserved_weight_tensors_and_normalization": true,
+  "source_and_model_hashes_verified": true,
+  "official_scorer_and_validator_unchanged": true,
+  "public_labels_read_for_release": false,
+  "training_or_tuning_performed_for_release": false,
+  "competition_data_and_prediction_files_tracked": 0,
+  "retired_files_preserved_locally": 169,
+  "public_repository_verified": true,
+  "dependency_installation": "Used the recorded installed CPU environment; a new dependency download was not repeated.",
+  "commands": [
+    "python -m tiki_data --atd-meta PATH_TO_TACTICAL_XML --atd-raw PATH_TO_TACTICAL_TXT --out runs/submission/TIKIDATA.csv",
+    "python -m pytest -c pytest.ini --rootdir=. tests/test_submission_release.py -q -p no:cacheprovider",
+    "python evaluation/validate_submission.py runs/submission/TIKIDATA.csv"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "candidate": "continued_verifier_control_seed42",
+  "configuration": "models/continued-verifier/configuration.json",
+  "configuration_sha256": "aba557e74b10c6d2a4d2f501817232d02fd67d2ff9be7666bd4c18369737f8a5",
+  "inference_module": "tiki_data.p2.verifier",
+  "inference_entry_point": "python -m tiki_data",
+  "selected_by": "explicit_user_request"
+}

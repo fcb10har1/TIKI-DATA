@@ -1,0 +1,100 @@
+{
+  "dataset": "IDSSE; DFL/Sportec Solutions labels, Bassek et al.2025",
+  "dataset_url": "https://doi.org/10.6084/m9.figshare.28196177",
+  "publication_url": "https://doi.org/10.1038/s41597-025-04505-y",
+  "license": "CC BY 4.0",
+  "matches": [
+    {
+      "match_id": "J03WMX",
+      "split": "train",
+      "frames": 145967,
+      "fps": 25.0,
+      "labelled_frames": 145967
+    },
+    {
+      "match_id": "J03WN1",
+      "split": "train",
+      "frames": 141561,
+      "fps": 25.0,
+      "labelled_frames": 141561
+    },
+    {
+      "match_id": "J03WOH",
+      "split": "train",
+      "frames": 137214,
+      "fps": 25.0,
+      "labelled_frames": 137214
+    },
+    {
+      "match_id": "J03WOY",
+      "split": "train",
+      "frames": 142536,
+      "fps": 25.0,
+      "labelled_frames": 142536
+    },
+    {
+      "match_id": "J03WPY",
+      "split": "validation",
+      "frames": 146211,
+      "fps": 25.0
+    },
+    {
+      "match_id": "J03WQQ",
+      "split": "validation",
+      "frames": 142345,
+      "fps": 25.0
+    },
+    {
+      "match_id": "J03WR9",
+      "split": "test",
+      "frames": 146810,
+      "fps": 25.0
+    }
+  ],
+  "label_mapping": "DFL BallStatus inactive -> D; active BallPossession home/away -> H/A; unknown -> X and excluded from loss",
+  "checkpoint_exports": [
+    {
+      "file": "historical.pt",
+      "sha256": "4951144e282cbdcab0aa1dfc9c479de3f58980722aed730354569b71d042acc8",
+      "original_checkpoint_sha256": "315b04fae0f2d570105081c3973bba75f011dab5e744175048b029c95ed62a97",
+      "weights_and_normalization_unchanged": true
+    },
+    {
+      "file": "segment_seed42.pt",
+      "sha256": "8d532a4da4d1ea2ea95e756dcb114cbecd971ae0afd1769376642e216925ebee",
+      "original_checkpoint_sha256": "6a48bb304dedb49956c8f3bb4e470a70dc49320c3c8739731ada5ea479f5732e",
+      "weights_and_normalization_unchanged": true
+    },
+    {
+      "file": "segment_seed43.pt",
+      "sha256": "6b58ae5542948f4e6da5049f1152f82b9608e622fa90899e804975b475399c38",
+      "original_checkpoint_sha256": "ebcf0f387349f93e0b572b71a90160d777657c38c9682b15f0a5cef647118b97",
+      "weights_and_normalization_unchanged": true
+    }
+  ],
+  "continued_seed42": {
+    "best_epoch": 10,
+    "completed_epochs": 15,
+    "stopping": "patience",
+    "learning_rate": 0.0001,
+    "coefficient": 0.0,
+    "objective": "frame cross-entropy +0.2 boundary BCE +0.5 interval cross-entropy",
+    "original_checkpoint_sha256": "6a48bb304dedb49956c8f3bb4e470a70dc49320c3c8739731ada5ea479f5732e"
+  },
+  "verifier": {
+    "kind": "RandomForestRegressor",
+    "n_estimators": 128,
+    "max_depth": 10,
+    "min_samples_leaf": 20,
+    "max_features": 0.75,
+    "max_samples": 0.85,
+    "seed": 42,
+    "n_jobs": 1,
+    "acceptance_threshold": 0.3,
+    "target": "Exact single-edit official multi-IoU SpellF1 gain on external training matches; scaled to event units",
+    "mining": "In-sample frozen external-training detectors; not out-of-fold"
+  },
+  "normalization": "Observed in-period external training frames only; embedded separately in each checkpoint",
+  "test_match_accessed_for_this_release": false,
+  "competition_labels_used_for_training": false
+}

@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "match": {"match_id": "BAR-ATH", "n_frames": 199319, "fps": 25},
-  "method": "rules",
-  "data_kind": "supplied",
-  "seed": 0,
-  "predictor": {"kind": "baseline", "window": 50}
-}

@@ -1,79 +1,93 @@
-# ---------------------------------------------------------------------------------------------
-# This repository is public. The full-match ground truth is not.
-#
-# Everything below either is a private asset, would leak the answer, or is generated output. The
-# history of this repo is new, so anything committed once is committed forever -- when in doubt,
-# add it here first and take it out later.
-# ---------------------------------------------------------------------------------------------
-
-# -- private ground truth ----------------------------------------------------------------------
-# The public ground truth is evaluation/gt/*_possession_gt_public.csv and is committed on purpose.
-# The full-match files below are graded over all 158857 frames and must never be published.
-*_possession_gt.csv
-*_possession_gt_meta.json
-*_possession_gt_reference.csv
-possession_by_frame.pkl
-
-# -- submissions -------------------------------------------------------------------------------
-# Any file in results/ is a set of labels for the whole match. A perfect one is a copy of the
-# ground truth, so the folder ships empty and stays that way.
-evaluation/results/*.csv
-
-# ...with one deliberate exception. The baselines are computed from the ATD alone -- the same ATD
-# every enrolled participant has -- and never read a ground truth of any kind, so they carry no
-# information about the answer. They ship so that a fresh clone has something real to score.
-!evaluation/results/baseline_*.csv
-evaluation/reports/
-evaluation/scoreboard.csv
-
-# -- gated data --------------------------------------------------------------------------------
-# data/ is committed empty, with only its README, so the folder participants are told to unpack
-# into actually exists in a fresh clone. Everything they put in it stays out of git.
-data/*
-!data/README.md
-!data/external/
-data/external/*
-!data/external/idsse_processed/
-!data/external/idsse_processed/**
-
+# Local competition data, predictions, archives and experiments must never be pushed.
+/runs/
+/artifacts/
+/experiments/
+/docs/
+/configs/
+/starter/
+/organizers/
+/data/*
+!/data/README.md
+/evaluation/gt/
+/evaluation/reports/
+*.csv
+*.npy
+*.npz
 *.mp4
 *.gzip
 *.pl3container
-
-# -- internal documents ---------------------------------------------------------------------------
-# OVERVIEW.md -- the institutional description of the competition -- IS committed. It is the only
-# place that explains why the format changed from 2026, and a document like that circulating by
-# email is exactly the artifact README.md's "anything you were sent earlier is superseded" line
-# exists to prevent. Versioned next to what it describes, it cannot drift out of sight.
-#
-# The 2026 edition's documents were moved to ../mtah2027-organizers/archive-2026/ -- they describe
-# a different competition and belong with the organiser tooling, not in this repository.
-#
-# *.pdf stays as insurance: internal decks and proposals have a habit of landing in the working
-# tree, and this repository is public.
 *.pdf
-
-# Organiser tooling lives in ../mtah2027-organizers, outside this repository. This line is
-# insurance against it being recreated in here by habit.
-organizers/
-
-# -- editors and build artifacts ---------------------------------------------------------------
-.idea/
-.vscode/
-__pycache__/
-*.py[cod]
+*_atd.xml
+*_atd.txt
+*_smart_tagging.xml
+*_homography.csv
+BAR-ATH_majority_FINAL.csv
+/models/*
+!/models/continued-verifier/
+*.pt
+*.joblib
+!/models/continued-verifier/*.pt
+!/models/continued-verifier/*.joblib
+.env
+.env.*
 .venv/
+.venv-*/
 venv/
 env/
-.venv-p2/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
 .DS_Store
 
-# P4 local experiments and derived match artifacts. Never publish frame-level data.
-runs/
-artifacts/
-*.npz
-!data/external/idsse_processed/**/*.npz
-**/submission.csv
-
-# Private comparison reference: local only, never publish.
-BAR-ATH_majority_FINAL.csv
+# Retired tracked source remains local; only the selected pipeline is released.
+/CITATION.cff
+/p3/official.py
+/p3/rules.py
+/p3/scripts/ablation.py
+/p3/scripts/dead_ball_diagnosis.py
+/p3/scripts/external_experiments.py
+/p3/scripts/make_ball_observed.py
+/p3/scripts/temperature_sweep.py
+/p3/stage.py
+/p3/synth.py
+/p3/synth_atd.py
+/p3/tests/test_decoder.py
+/p3/tests/test_rules.py
+/p3/tests/test_spells.py
+/p3/tests/test_stage.py
+/requirements-p2.txt
+/requirements-p3.txt
+/requirements-p4.txt
+/requirements-selected.txt
+/requirements-starter.txt
+/tests/test_motion_variants.py
+/tests/test_p1.py
+/tests/test_p2.py
+/tests/test_p3.py
+/tests/test_p4.py
+/tests/test_selected.py
+/tiki_data/benchmark.py
+/tiki_data/demo.py
+/tiki_data/experiments.py
+/tiki_data/holdout.py
+/tiki_data/p1/__main__.py
+/tiki_data/p1/adapter.py
+/tiki_data/p1/fetch_idsse_ball.py
+/tiki_data/p1/idsse.py
+/tiki_data/p1/kalman.py
+/tiki_data/p2/__main__.py
+/tiki_data/p2/motion_experiment.py
+/tiki_data/p2/selected.py
+/tiki_data/p2/selected_decoder.py
+/tiki_data/p2/selected_features.py
+/tiki_data/p2/smoke.py
+/tiki_data/p2/speed_ablation.py
+/tiki_data/p2/train.py
+/tiki_data/p3/__init__.py
+/tiki_data/p3/decoder.py
+/tiki_data/p3/rules.py
+/tiki_data/pipeline.py
+/tiki_data/provenance.py
+/tiki_data/workflow.py
